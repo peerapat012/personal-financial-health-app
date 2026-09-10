@@ -16,6 +16,7 @@ import {
 import { ConfirmationDialog, EmptyState } from "@/components/Feedback";
 import { Button } from "@/components/ui/button";
 import { FinancePage } from "@/features/finance/pages/FinancePage";
+import { HealthPage } from "@/features/health/pages/HealthPage";
 import type { SessionResponse } from "@/lib/api-types";
 import {
   ApiError,
@@ -184,11 +185,13 @@ function App() {
           <span className="api-pill"><i /> API connected</span>
         </header>
         <div className="route-body">
-          {activeRoute.id === "finance" ? <FinancePage /> : <EmptyState
-            icon={routeIcons[activeRoute.id]}
-            title={`${activeRoute.label} is ready for its data`}
-            description={activeRoute.description}
-          />}
+          {activeRoute.id === "finance" ? <FinancePage /> : activeRoute.id === "health" ? <HealthPage /> : (
+            <EmptyState
+              icon={routeIcons[activeRoute.id]}
+              title={`${activeRoute.label} is ready for its data`}
+              description={activeRoute.description}
+            />
+          )}
         </div>
       </main>
 

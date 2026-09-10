@@ -49,14 +49,14 @@ Phase 0 validation: desktop production build, API foundation checks, Python comp
 
 ## Phase 3: health data and screens
 
-- [ ] Add `weight_logs` model, schemas, service, and date upsert/list routes. Dependency: initial migration, auth.
-- [ ] Add weight-log API wrapper and hooks. Dependency: weight-log routes.
-- [ ] Add weight-log form and history view with empty/error states. Dependency: hooks and shared forms.
-- [ ] Add `workouts` model, schemas, service, and CRUD routes. Dependency: initial migration, auth.
-- [ ] Add workout API wrapper and hooks. Dependency: workout routes.
-- [ ] Add workout form and table with date/activity/duration validation. Dependency: hooks and shared forms.
-- [ ] Add basic health summary functions for latest weight, recorded-value averages, and workout minutes. Dependency: weight logs and workouts.
-- [ ] Add health summary response contract and focused tests for null values, date ranges, and duration totals. Dependency: summary functions.
+- [x] Add `weight_logs` model, schemas, service, and date upsert/list routes. Dependency: initial migration, auth.
+- [x] Add weight-log API wrapper and hooks. Dependency: weight-log routes.
+- [x] Add weight-log form and history view with empty/error states. Dependency: hooks and shared forms.
+- [x] Add `workouts` model, schemas, service, and CRUD routes. Dependency: initial migration, auth.
+- [x] Add workout API wrapper and hooks. Dependency: workout routes.
+- [x] Add workout form and table with date/activity/duration validation. Dependency: hooks and shared forms.
+- [x] Add basic health summary functions for latest weight, recorded-value averages, and workout minutes. Dependency: weight logs and workouts.
+- [x] Add health summary response contract and focused tests for null values, date ranges, and duration totals. Dependency: summary functions.
 
 ## Phase 4: goals
 

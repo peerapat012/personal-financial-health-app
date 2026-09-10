@@ -3,7 +3,6 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Generic, Literal, TypeVar
 from uuid import UUID
-from zoneinfo import ZoneInfo
 
 from pydantic import (
     AfterValidator,
@@ -14,6 +13,8 @@ from pydantic import (
     PlainSerializer,
     model_validator,
 )
+
+from app.core.time import today_bangkok
 
 AccountKind = Literal["cash", "bank", "ewallet"]
 CategoryKind = Literal["income", "expense"]
@@ -36,10 +37,6 @@ def parse_money(value: object) -> object:
 
 Money = Annotated[Decimal, BeforeValidator(parse_money), Field(max_digits=14, decimal_places=2)]
 PositiveMoney = Annotated[Decimal, BeforeValidator(parse_money), Field(gt=0, max_digits=14, decimal_places=2)]
-
-
-def today_bangkok() -> date:
-    return datetime.now(ZoneInfo("Asia/Bangkok")).date()
 
 
 def not_future(value: date) -> date:

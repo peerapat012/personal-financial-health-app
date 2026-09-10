@@ -71,3 +71,33 @@ export type AccountInput = Pick<Account, "id" | "name" | "kind" | "opening_balan
 export type CategoryInput = Pick<Category, "id" | "name" | "kind">;
 export type TransactionInput = Pick<Transaction, "id" | "kind" | "account_id" | "to_account_id" | "category_id" | "amount" | "occurred_on" | "note">;
 export type BudgetInput = Pick<Budget, "id" | "category_id" | "month" | "amount">;
+
+export type ActivityType = "walk" | "run" | "cycle" | "strength" | "other";
+
+export type WeightLog = Timestamps & {
+  id: string;
+  log_date: string;
+  weight_kg: string | null;
+  note: string | null;
+};
+
+export type Workout = Timestamps & {
+  id: string;
+  occurred_on: string;
+  activity_type: ActivityType;
+  duration_minutes: number;
+  note: string | null;
+};
+
+export type WeightLogInput = Pick<WeightLog, "weight_kg" | "note">;
+export type WorkoutInput = Pick<Workout, "id" | "occurred_on" | "activity_type" | "duration_minutes" | "note">;
+
+export type HealthSummary = {
+  from_date: string;
+  to_date: string;
+  latest_weight_kg: string | null;
+  latest_weight_date: string | null;
+  average_weight_kg: string | null;
+  recorded_weight_days: number;
+  workout_minutes: number;
+};
