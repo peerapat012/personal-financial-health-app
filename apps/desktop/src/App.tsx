@@ -15,6 +15,7 @@ import {
 
 import { ConfirmationDialog, EmptyState } from "@/components/Feedback";
 import { Button } from "@/components/ui/button";
+import { FinancePage } from "@/features/finance/pages/FinancePage";
 import type { SessionResponse } from "@/lib/api-types";
 import {
   ApiError,
@@ -23,6 +24,7 @@ import {
   setApiToken,
 } from "@/lib/api-client";
 import { appRoutes, getRouteFromHash, type RouteId } from "@/routes/routes";
+import { queryClient } from "@/lib/query-client";
 import "./App.css";
 
 const routeIcons: Record<RouteId, LucideIcon> = {
@@ -85,6 +87,7 @@ function App() {
 
   function lock() {
     clearApiToken();
+    queryClient.clear();
     setSession(null);
     setConfirmLock(false);
     goTo("/dashboard", true);
@@ -180,11 +183,13 @@ function App() {
           <div><p className="eyebrow">{activeRoute.kicker}</p><h2>{activeRoute.label}</h2></div>
           <span className="api-pill"><i /> API connected</span>
         </header>
-        <EmptyState
-          icon={routeIcons[activeRoute.id]}
-          title={`${activeRoute.label} is ready for its data`}
-          description={activeRoute.description}
-        />
+        <div className="route-body">
+          {activeRoute.id === "finance" ? <FinancePage /> : <EmptyState
+            icon={routeIcons[activeRoute.id]}
+            title={`${activeRoute.label} is ready for its data`}
+            description={activeRoute.description}
+          />}
+        </div>
       </main>
 
       <ConfirmationDialog

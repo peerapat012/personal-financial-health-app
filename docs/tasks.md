@@ -33,19 +33,19 @@ Phase 0 validation: desktop production build, API foundation checks, Python comp
 
 ## Phase 2: finance data and screens
 
-- [ ] Add SQLAlchemy models and schemas for accounts and categories if not completed in the initial migration. Dependency: initial migration.
-- [ ] Add account and category services and REST routes. Dependency: models, schemas, auth.
-- [ ] Add account/category API wrappers and query hooks. Dependency: finance routes.
-- [ ] Add account list/create/edit/archive screens. Dependency: API wrappers and shared forms.
-- [ ] Add category list/create/edit/archive screens. Dependency: API wrappers and shared forms.
-- [ ] Add transaction model, schemas, service, and routes with income, expense, and transfer invariants. Dependency: accounts and categories.
-- [ ] Add transaction API wrapper and `useTransactions.ts`. Dependency: transaction routes.
-- [ ] Add `TransactionForm.tsx` and `TransactionTable.tsx`. Dependency: transaction hook and shared feedback.
-- [ ] Add transaction filters, pagination, delete confirmation, and retry behavior. Dependency: transaction screen.
-- [ ] Add budget model, schemas, service, and routes. Dependency: categories.
-- [ ] Add budget API wrapper, hook, and monthly budget editor/list. Dependency: budget routes.
-- [ ] Add finance balance calculation and monthly summary service functions. Dependency: transactions.
-- [ ] Add finance summary response contract and tests for income, expense, transfers, and opening balances. Dependency: summary service.
+- [x] Add SQLAlchemy models and schemas for accounts and categories if not completed in the initial migration. Dependency: initial migration.
+- [x] Add account and category services and REST routes. Dependency: models, schemas, auth.
+- [x] Add account/category API wrappers and query hooks. Dependency: finance routes.
+- [x] Add account list/create/edit/archive screens. Dependency: API wrappers and shared forms.
+- [x] Add category list/create/edit/archive screens. Dependency: API wrappers and shared forms.
+- [x] Add transaction model, schemas, service, and routes with income, expense, and transfer invariants. Dependency: accounts and categories.
+- [x] Add transaction API wrapper and `useTransactions.ts`. Dependency: transaction routes.
+- [x] Add `TransactionForm.tsx` and `TransactionTable.tsx`. Dependency: transaction hook and shared feedback.
+- [x] Add transaction filters, pagination, delete confirmation, and retry behavior. Dependency: transaction screen.
+- [x] Add budget model, schemas, service, and routes. Dependency: categories.
+- [x] Add budget API wrapper, hook, and monthly budget editor/list. Dependency: budget routes.
+- [x] Add finance balance calculation and monthly summary service functions. Dependency: transactions.
+- [x] Add finance summary response contract and tests for income, expense, transfers, and opening balances. Dependency: summary service.
 
 ## Phase 3: health data and screens
 

@@ -26,3 +26,14 @@ export function formatDuration(minutes: number) {
   const remainder = minutes % 60;
   return [hours && `${hours} hr`, remainder && `${remainder} min`].filter(Boolean).join(" ") || "0 min";
 }
+
+export function todayBangkok() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Asia/Bangkok",
+  }).formatToParts();
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${value.year}-${value.month}-${value.day}`;
+}
