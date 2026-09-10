@@ -4,21 +4,23 @@ This is a documentation-only roadmap. Do not perform these tasks during the plan
 
 ## Phase 0: foundation
 
-- [ ] Create the `apps/desktop` and `apps/api` workspace directories without moving useful existing files.
-- [ ] Add a minimal root README linking to the six planning documents.
-- [ ] Add root and app `.gitignore` entries for build output, virtual environments, local env files, and generated artifacts.
-- [ ] Set up Tauri 2 with React, TypeScript, and Vite. Dependency: none.
-- [ ] Set TypeScript strict mode and the initial desktop entry point. Dependency: Tauri/Vite setup.
-- [ ] Set up FastAPI with one app entry point and `/healthz`. Dependency: none.
-- [ ] Add backend configuration loading and `.env.example`. Dependency: FastAPI setup.
-- [ ] Add SQLAlchemy engine/session setup using the backend `DATABASE_URL`. Dependency: configuration.
-- [ ] Add Neon development/test connection checks. Dependency: SQLAlchemy setup.
-- [ ] Add Alembic configuration using the separate migration connection. Dependency: SQLAlchemy setup.
-- [ ] Add the initial migration for the V1 schema. Dependency: database design, Alembic setup.
-- [ ] Add the personal bearer-token dependency and `/api/v1/session`. Dependency: FastAPI setup, configuration.
-- [ ] Add the shared API error envelope and exception handlers. Dependency: FastAPI setup.
-- [ ] Add the desktop API client with base URL, in-memory token, timeout, JSON parsing, and error normalization. Dependency: desktop entry point, session contract.
-- [ ] Add the app shell, lock screen, navigation, and session clear behavior. Dependency: API client, session endpoint.
+- [x] Create the `apps/desktop` and `apps/api` workspace directories without moving useful existing files.
+- [x] Add a minimal root README linking to the six planning documents.
+- [x] Add root and app `.gitignore` entries for build output, virtual environments, local env files, and generated artifacts.
+- [x] Set up Tauri 2 with React, TypeScript, and Vite. Dependency: none.
+- [x] Set TypeScript strict mode and the initial desktop entry point. Dependency: Tauri/Vite setup.
+- [x] Set up FastAPI with one app entry point and `/healthz`. Dependency: none.
+- [x] Add backend configuration loading and `.env.example`. Dependency: FastAPI setup.
+- [x] Add SQLAlchemy engine/session setup using the backend `DATABASE_URL`. Dependency: configuration.
+- [x] Add Neon development/test connection checks. Dependency: SQLAlchemy setup.
+- [x] Add Alembic configuration using the separate migration connection. Dependency: SQLAlchemy setup.
+- [x] Add the initial migration for the V1 schema. Dependency: database design, Alembic setup.
+- [x] Add the personal bearer-token dependency and `/api/v1/session`. Dependency: FastAPI setup, configuration.
+- [x] Add the shared API error envelope and exception handlers. Dependency: FastAPI setup.
+- [x] Add the desktop API client with base URL, in-memory token, timeout, JSON parsing, and error normalization. Dependency: desktop entry point, session contract.
+- [x] Add the app shell, lock screen, navigation, and session clear behavior. Dependency: API client, session endpoint.
+
+Phase 0 validation: desktop production build, API foundation checks, Python compile check, SQLAlchemy metadata load, Alembic offline PostgreSQL generation, and live Neon connectivity pass. Neon is migrated to revision `0001` with all eight MVP tables, `alembic_version`, and seven seed categories verified. Rust 1.98.1 is installed; native Tauri compilation awaits the MSVC linker from Visual Studio Build Tools with the Desktop development with C++ workload.
 
 ## Phase 1: shared desktop behavior
 
