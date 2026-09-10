@@ -58,6 +58,8 @@ features/finance/
 └── types.ts
 ```
 
+The post-install welcome, token form, and session validation belong with the app-level session gate, not inside a business feature. Keep this small until it needs its own file; if extracted, use `apps/desktop/src/components/SessionGate.tsx`. First-account and first-entry prompts remain in the Dashboard and feature empty states.
+
 ## Backend directories
 
 - `apps/api/app/main.py`: creates the FastAPI app, middleware, exception handlers, and route registration.

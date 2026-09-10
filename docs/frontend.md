@@ -827,6 +827,10 @@ The first usable desktop version should focus on:
 - Currency
 - Basic application preferences
 
+## Post-install flow
+
+Use one compact welcome/token screen. Explain that the app connects to the owner's private API and keeps the token only for the current session. Show inline connecting, invalid-token, and API-unavailable states. On success, open Dashboard. When no data exists, guide the user through existing empty states: create an account, record a transaction, or begin with Health. Avoid a multi-step wizard, sample data, and tutorial carousel.
+
 Do not add advanced UI for future features before those features actually enter the implementation plan.
 
 ---

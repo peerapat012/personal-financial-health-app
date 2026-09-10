@@ -61,6 +61,8 @@ Dashboard and export reads should use a consistent read transaction so their com
 
 V1 uses one personal access token. The owner creates a high-entropy random token outside the app and keeps it in a password manager. The backend stores only its SHA-256 digest in `PERSONAL_API_TOKEN_SHA256`. The desktop asks for the token on launch, calls `/api/v1/session`, and holds the token in memory only.
 
+The post-install flow is client-side session gating, not a persisted onboarding system. Successful `/api/v1/session` validation opens Dashboard; missing data is handled by normal feature empty states. No onboarding table, completion flag, or additional endpoint is required.
+
 There is no signup, password reset, JWT, refresh token, session table, or user table in V1. Locking clears desktop memory; it does not revoke a stolen token. Rotation happens by changing the backend digest. Every business endpoint, including export, requires the token. Missing and invalid tokens return the same 401 shape.
 
 Before multiple devices can edit data concurrently, add optimistic concurrency and a conflict policy. Before multi-user access, redesign identity, ownership, authorization, and database isolation.

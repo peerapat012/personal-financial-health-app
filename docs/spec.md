@@ -67,7 +67,7 @@ Goal progress is calculated from current canonical data. A goal is a milestone a
 
 ## Main user flows
 
-1. On first launch, the user enters the provisioned personal API token. The app validates it through the session endpoint and keeps it only in memory.
+1. After installation, the app explains that it needs the deployed API and a provisioned personal token. The user enters the token, the app validates it through the session endpoint, and keeps it only in memory.
 2. The user opens Dashboard, chooses a month, and sees finance, health, and active-goal summaries.
 3. The user creates an account and categories, then records income, expenses, and transfers from Finance.
 4. The user creates a monthly category budget and compares actual expense totals with the budget.
@@ -75,6 +75,10 @@ Goal progress is calculated from current canonical data. A goal is a milestone a
 6. The user creates a financial or weight goal and reviews calculated progress on Dashboard or Goals.
 7. The user edits or deletes a record after confirmation. A failed request keeps the form values available for retry.
 8. The user locks the app or closes it; the token and client-side data are cleared.
+
+### Recommended post-install flow
+
+Keep first run short: welcome and privacy note, token entry, connection/authentication result, then Dashboard. If no finance data exists, Dashboard shows one primary action to create the first account and a secondary option to begin with Health. After an account exists, the next empty-state action is to record the first transaction. Goals remain optional. Do not require a profile, tutorial carousel, sample data, or preference wizard; V1 already fixes THB, kilograms, and `Asia/Bangkok`.
 
 ## Dashboard requirements
 
