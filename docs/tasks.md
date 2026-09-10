@@ -68,6 +68,7 @@ Phase 0 validation: desktop production build, API foundation checks, Python comp
 
 ## Phase 5: Dashboard and experience
 
+- [ ] Add Better Auth username/password sign-in, session handling, and FastAPI authorization integration. Dependency: deployed API and database.
 - [ ] Add the dashboard aggregation service and `/api/v1/dashboard?month=YYYY-MM`. Dependency: finance/health/goals services.
 - [ ] Add Dashboard page cards for balances, monthly finance, budgets, health, goals, and recent transactions. Dependency: dashboard API.
 - [ ] Add the month selector and correct Asia/Bangkok month boundaries. Dependency: Dashboard page.
@@ -75,6 +76,7 @@ Phase 0 validation: desktop production build, API foundation checks, Python comp
 - [ ] Add dashboard loading, empty, error, and no-data states. Dependency: Dashboard page.
 - [ ] Add quick-add actions that open existing finance and health forms. Dependency: feature forms.
 - [ ] Add Settings page for units/timezone display, session lock, app version, and API status. Dependency: session and app shell.
+- [ ] Add a light, dark, and system theme switch with a persisted preference. Dependency: Settings page and app shell.
 
 ## Phase 6: data protection and release readiness
 
