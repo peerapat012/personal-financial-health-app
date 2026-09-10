@@ -1,49 +1,57 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
+  ArrowRight,
+  CircleCheck,
   Dumbbell,
   LayoutDashboard,
   LockKeyhole,
   Settings,
+  ShieldCheck,
   Target,
   WalletCards,
 } from "lucide-react";
 
+import { ConfirmationDialog, EmptyState } from "@/components/Feedback";
 import { Button } from "@/components/ui/button";
+import type { SessionResponse } from "@/lib/api-types";
 import {
   ApiError,
   apiRequest,
   clearApiToken,
   setApiToken,
 } from "@/lib/api-client";
+import { appRoutes, getRouteFromHash, type RouteId } from "@/routes/routes";
 import "./App.css";
 
-type Session = {
-  authenticated: true;
-  currency: "THB";
-  timezone: "Asia/Bangkok";
+const routeIcons: Record<RouteId, LucideIcon> = {
+  dashboard: LayoutDashboard,
+  finance: WalletCards,
+  health: Dumbbell,
+  goals: Target,
+  settings: Settings,
 };
 
-type Section = {
-  name: string;
-  icon: LucideIcon;
-};
-
-const sections: Section[] = [
-  { name: "Dashboard", icon: LayoutDashboard },
-  { name: "Finance", icon: WalletCards },
-  { name: "Health", icon: Dumbbell },
-  { name: "Goals", icon: Target },
-  { name: "Settings", icon: Settings },
-];
+function goTo(path: string, replace = false) {
+  const hash = `#${path}`;
+  if (replace) window.location.replace(hash);
+  else window.location.hash = hash;
+}
 
 function App() {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [activeSection, setActiveSection] = useState("Dashboard");
+  const [session, setSession] = useState<SessionResponse | null>(null);
+  const [activeRoute, setActiveRoute] = useState(getRouteFromHash);
   const [tokenInput, setTokenInput] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmLock, setConfirmLock] = useState(false);
+
+  useEffect(() => {
+    const syncRoute = () => setActiveRoute(getRouteFromHash());
+    window.addEventListener("hashchange", syncRoute);
+    return () => window.removeEventListener("hashchange", syncRoute);
+  }, []);
 
   async function unlock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,15 +65,18 @@ function App() {
     setError("");
     setApiToken(value);
     try {
-      await apiRequest<Session>("/session");
+      const nextSession = await apiRequest<SessionResponse>("/session");
       setTokenInput("");
-      setAuthenticated(true);
+      setSession(nextSession);
+      goTo("/dashboard", true);
     } catch (requestError) {
       clearApiToken();
       setError(
-        requestError instanceof ApiError
-          ? requestError.message
-          : "Unable to unlock app.",
+        requestError instanceof ApiError && requestError.status === 401
+          ? "That token was not accepted. Check it and try again."
+          : requestError instanceof ApiError
+            ? requestError.message
+            : "The API could not be reached. Try again when it is available.",
       );
     } finally {
       setSubmitting(false);
@@ -74,95 +85,116 @@ function App() {
 
   function lock() {
     clearApiToken();
-    setAuthenticated(false);
-    setActiveSection("Dashboard");
+    setSession(null);
+    setConfirmLock(false);
+    goTo("/dashboard", true);
   }
 
-  if (!authenticated) {
+  if (!session) {
     return (
-      <main className="grid min-h-screen place-items-center p-6">
-        <form
-          className="grid w-full max-w-md gap-4 rounded-2xl bg-card p-8 text-card-foreground shadow-[0_18px_50px_rgb(31_50_42/0.10)]"
-          onSubmit={unlock}
-        >
-          <p className="text-xs font-bold tracking-[0.12em] text-primary uppercase">
-            Private desktop app
+      <main className="session-page">
+        <section className="session-intro" aria-labelledby="welcome-title">
+          <div className="brand-mark" aria-hidden="true">PF</div>
+          <p className="eyebrow">Private by design</p>
+          <h1 id="welcome-title">Your money and health, in one quiet place.</h1>
+          <p className="session-lede">
+            This desktop app connects only to your private API. Your personal
+            token stays in memory for this session and is cleared when you lock
+            or close the app.
           </p>
-          <div className="space-y-2">
-            <h1 className="text-balance text-3xl font-semibold tracking-tight">
-              Personal Financial Health
-            </h1>
-            <p className="text-pretty text-muted-foreground">
-              Connect to your API with your personal token.
-            </p>
+          <div className="privacy-points">
+            <p><ShieldCheck aria-hidden="true" /> No token is saved on this device</p>
+            <p><CircleCheck aria-hidden="true" /> Your API validates access before data loads</p>
           </div>
-          <label className="mt-2 text-sm font-semibold" htmlFor="token">
-            Personal API token
-          </label>
+        </section>
+
+        <form className="session-card" onSubmit={unlock}>
+          <p className="eyebrow">Connect your API</p>
+          <h2>Unlock your dashboard</h2>
+          <p className="text-muted-foreground">Paste the personal token you provisioned for this app.</p>
+          <label htmlFor="token">Personal API token</label>
           <input
             id="token"
-            className="h-10 rounded-lg border bg-background px-3 text-sm shadow-xs focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:outline-none"
+            name="token"
             type="password"
             value={tokenInput}
-            onChange={(event) => setTokenInput(event.currentTarget.value)}
+            onChange={(event) => {
+              setTokenInput(event.currentTarget.value);
+              if (error) setError("");
+            }}
             autoComplete="off"
             autoFocus
+            required
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "token-error" : "token-help"}
           />
-          {error && (
-            <p className="text-sm text-destructive" aria-live="polite">
-              {error}
-            </p>
-          )}
-          <Button className="h-10" type="submit" disabled={submitting}>
-            {submitting ? "Connecting…" : "Unlock"}
+          <p id="token-help" className="field-help">The token is sent only to the configured API.</p>
+          {error && <p id="token-error" className="form-error" role="alert">{error}</p>}
+          <Button className="session-submit" type="submit" disabled={submitting}>
+            {submitting ? "Checking connection…" : "Connect and continue"}
+            {!submitting && <ArrowRight aria-hidden="true" />}
           </Button>
+          <p className="connection-status" aria-live="polite">
+            {submitting ? "Validating your token with the API…" : "Ready to connect"}
+          </p>
         </form>
       </main>
     );
   }
 
   return (
-    <div className="grid min-h-screen grid-cols-[220px_1fr] max-sm:grid-cols-1">
-      <aside className="flex flex-col gap-6 border-r border-sidebar-border bg-sidebar p-5 text-sidebar-foreground max-sm:border-r-0 max-sm:border-b">
-        <div className="px-2">
-          <p className="text-xs font-bold tracking-[0.12em] text-sidebar-primary uppercase">
-            Personal
-          </p>
-          <h1 className="mt-1 text-lg font-semibold">Financial Health</h1>
+    <div className="app-shell">
+      <aside className="app-sidebar">
+        <div className="sidebar-brand">
+          <div className="brand-mark brand-mark-small" aria-hidden="true">PF</div>
+          <div><p className="eyebrow">Personal</p><h1>Financial Health</h1></div>
         </div>
-        <nav className="grid gap-1" aria-label="Main navigation">
-          {sections.map(({ name, icon: Icon }) => (
-            <Button
-              key={name}
-              className="h-10 justify-start gap-3 px-3"
-              variant={name === activeSection ? "secondary" : "ghost"}
-              onClick={() => setActiveSection(name)}
-            >
-              <Icon strokeWidth={2} />
-              {name}
-            </Button>
-          ))}
+        <nav aria-label="Main navigation">
+          {appRoutes.map((route) => {
+            const Icon = routeIcons[route.id];
+            const selected = route.id === activeRoute.id;
+            return (
+              <Button
+                key={route.id}
+                className="nav-button"
+                variant={selected ? "secondary" : "ghost"}
+                onClick={() => goTo(route.path)}
+                aria-current={selected ? "page" : undefined}
+              >
+                <Icon strokeWidth={1.8} aria-hidden="true" />
+                {route.label}
+              </Button>
+            );
+          })}
         </nav>
-        <Button
-          className="mt-auto h-10 justify-start gap-3 px-3"
-          variant="outline"
-          onClick={lock}
-        >
-          <LockKeyhole strokeWidth={2} />
-          Lock
-        </Button>
+        <div className="sidebar-foot">
+          <p>{session.currency} · {session.timezone}</p>
+          <Button variant="outline" onClick={() => setConfirmLock(true)}>
+            <LockKeyhole aria-hidden="true" /> Lock session
+          </Button>
+        </div>
       </aside>
-      <main className="p-12 max-sm:p-6">
-        <p className="text-xs font-bold tracking-[0.12em] text-primary uppercase">
-          Phase 0 foundation
-        </p>
-        <h2 className="mt-2 text-balance text-3xl font-semibold tracking-tight">
-          {activeSection}
-        </h2>
-        <p className="mt-3 text-pretty text-muted-foreground">
-          Feature screen arrives in its roadmap phase.
-        </p>
+
+      <main className="route-page">
+        <header className="route-header">
+          <div><p className="eyebrow">{activeRoute.kicker}</p><h2>{activeRoute.label}</h2></div>
+          <span className="api-pill"><i /> API connected</span>
+        </header>
+        <EmptyState
+          icon={routeIcons[activeRoute.id]}
+          title={`${activeRoute.label} is ready for its data`}
+          description={activeRoute.description}
+        />
       </main>
+
+      <ConfirmationDialog
+        open={confirmLock}
+        title="Lock this session?"
+        description="Your in-memory token will be cleared. You will need to enter it again to reconnect."
+        confirmLabel="Lock session"
+        onConfirm={lock}
+        onCancel={() => setConfirmLock(false)}
+      />
     </div>
   );
 }

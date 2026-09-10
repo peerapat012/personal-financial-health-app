@@ -1,3 +1,5 @@
+import type { ErrorEnvelope } from "@/lib/api-types";
+
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1"
 ).replace(/\/$/, "");
@@ -46,7 +48,7 @@ export async function apiRequest<T>(
         : await response.json().catch(() => null);
 
     if (!response.ok) {
-      const error = body?.error;
+      const error = (body as ErrorEnvelope | null)?.error;
       throw new ApiError(
         error?.message ?? "Request failed",
         response.status,

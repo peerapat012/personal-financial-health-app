@@ -24,12 +24,12 @@ Phase 0 validation: desktop production build, API foundation checks, Python comp
 
 ## Phase 1: shared desktop behavior
 
-- [ ] Add the post-install session flow around the existing lock screen: short privacy/API explanation, token validation feedback, successful redirect to Dashboard, and no token persistence. Dependency: API client and session endpoint.
-- [ ] Add route definitions for Dashboard, Finance, Health, Goals, and Settings. Dependency: app shell.
-- [ ] Add shared loading, empty, error, confirmation, and unsaved-form feedback components. Dependency: app shell.
-- [ ] Add date, THB, weight, duration, and unit formatters. Dependency: app shell.
-- [ ] Add frontend transport types from the FastAPI OpenAPI contract or a single maintained wire-type file. Dependency: API client and initial API schemas.
-- [ ] Add one focused frontend validation approach using native inputs and Zod only where it improves a boundary. Dependency: shared form patterns.
+- [x] Add the post-install session flow around the existing lock screen: short privacy/API explanation, token validation feedback, successful redirect to Dashboard, and no token persistence. Dependency: API client and session endpoint.
+- [x] Add route definitions for Dashboard, Finance, Health, Goals, and Settings. Dependency: app shell.
+- [x] Add shared loading, empty, error, confirmation, and unsaved-form feedback components. Dependency: app shell.
+- [x] Add date, THB, weight, duration, and unit formatters. Dependency: app shell.
+- [x] Add frontend transport types from the FastAPI OpenAPI contract or a single maintained wire-type file. Dependency: API client and initial API schemas.
+- [x] Add one focused frontend validation approach using native inputs and Zod only where it improves a boundary. Dependency: shared form patterns.
 
 ## Phase 2: finance data and screens
 
