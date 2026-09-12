@@ -101,3 +101,23 @@ export type HealthSummary = {
   recorded_weight_days: number;
   workout_minutes: number;
 };
+
+export type GoalInput = {
+  id: string;
+  name: string;
+  start_date: string;
+  due_date: string | null;
+};
+export type FinancialGoalInput = GoalInput & { account_id: string; baseline_amount: string; target_amount: string };
+export type HealthGoalInput = GoalInput & { baseline_weight_kg: string; target_weight_kg: string };
+export type GoalPatch = { name?: string; due_date?: string | null; archived?: boolean };
+type GoalProgress = Timestamps & {
+  archived_at: string | null;
+  progress_ratio: string | null;
+  progress_percent: string | null;
+  achieved: boolean;
+};
+export type FinancialGoal = FinancialGoalInput & GoalProgress & { account_name: string; current_amount: string };
+export type HealthGoal = HealthGoalInput & GoalProgress & { current_weight_kg: string | null; current_weight_date: string | null };
+export type Goal = FinancialGoal | HealthGoal;
+export type GoalKind = "financial" | "health";

@@ -132,6 +132,10 @@ Activity type must be `walk`, `run`, `cycle`, `strength`, or `other`. Duration i
 
 Goal names are required. Due date cannot precede start date. Financial target must be greater than baseline. Weight target must differ from baseline and both weights must be 1.00–500.00. Progress is clamped for display but the raw ratio is returned. Archived goals are excluded from Dashboard by default.
 
+Start dates cannot be future. Goal type, account, baseline, target, and start date are immutable; create a new goal to change them. Financial responses also include `account_name`. Current amount is the account balance as of today, including opening balance and transfers; archived accounts remain reportable. Health responses include `current_weight_date` and use the latest non-null weight on or after the start date through today. With no qualifying weight, `current_weight_kg`, `current_weight_date`, `progress_ratio`, and `progress_percent` are null, and `achieved` is false. Ratios and percentages are decimal strings when present. Achieved state is recalculated and can reverse after records change.
+
+Both goal collections support stable pagination and default to excluding archived goals. A repeated create with the same client ID and payload returns the existing goal; a different payload returns 409.
+
 ## Dashboard summary
 
 | Method | Path | Purpose | Request/query | Response |

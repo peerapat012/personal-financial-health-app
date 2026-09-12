@@ -11,6 +11,7 @@ export class ApiError extends Error {
     message: string,
     readonly status: number,
     readonly code = "REQUEST_FAILED",
+    readonly fields?: Record<string, string>,
   ) {
     super(message);
   }
@@ -53,6 +54,7 @@ export async function apiRequest<T>(
         error?.message ?? "Request failed",
         response.status,
         error?.code,
+        error?.fields,
       );
     }
 

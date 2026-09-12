@@ -60,11 +60,13 @@ Phase 0 validation: desktop production build, API foundation checks, Python comp
 
 ## Phase 4: goals
 
-- [ ] Add `financial_goals` model, schemas, service, and routes. Dependency: accounts and balance calculation.
-- [ ] Add financial-goal API wrapper, hook, form, and list. Dependency: financial-goal routes.
-- [ ] Add `health_goals` model, schemas, service, and routes. Dependency: weight logs and health summary functions.
-- [ ] Add health-goal API wrapper, hook, form, and list. Dependency: health-goal routes.
-- [ ] Add goal progress calculations and tests for increasing/decreasing weight goals, no-data state, clamping, and achieved state. Dependency: both goal services.
+- [x] Add `financial_goals` model, schemas, service, and routes. Dependency: accounts and balance calculation.
+- [x] Add financial-goal API wrapper, hook, form, and list. Dependency: financial-goal routes.
+- [x] Add `health_goals` model, schemas, service, and routes. Dependency: weight logs and health summary functions.
+- [x] Add health-goal API wrapper, hook, form, and list. Dependency: health-goal routes.
+- [x] Add goal progress calculations and tests for increasing/decreasing weight goals, no-data state, clamping, and achieved state. Dependency: both goal services.
+
+Phase 4 reuses the goal models/tables from migration `0001`, existing finance/health calculations, native form validation, and shared desktop feedback. No migration or new dependency is needed. Validation: 13 API tests pass, including local service/HTTP goal lifecycle checks, plus the desktop production build and shared frontend checks. Live PostgreSQL integration and native installer acceptance remain release checks in Phase 6.
 
 ## Phase 5: Dashboard and experience
 

@@ -17,6 +17,7 @@ import { ConfirmationDialog, EmptyState } from "@/components/Feedback";
 import { Button } from "@/components/ui/button";
 import { FinancePage } from "@/features/finance/pages/FinancePage";
 import { HealthPage } from "@/features/health/pages/HealthPage";
+import { GoalsPage } from "@/features/goals/pages/GoalsPage";
 import type { SessionResponse } from "@/lib/api-types";
 import {
   ApiError,
@@ -49,12 +50,20 @@ function App() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [confirmLock, setConfirmLock] = useState(false);
+  const [goalsDirty, setGoalsDirty] = useState(false);
 
   useEffect(() => {
-    const syncRoute = () => setActiveRoute(getRouteFromHash());
+    const syncRoute = () => {
+      const next = getRouteFromHash();
+      if (next.id !== activeRoute.id && goalsDirty && !window.confirm("Discard unsaved goal changes?")) {
+        window.history.replaceState(null, "", `#${activeRoute.path}`);
+        return;
+      }
+      setActiveRoute(next);
+    };
     window.addEventListener("hashchange", syncRoute);
     return () => window.removeEventListener("hashchange", syncRoute);
-  }, []);
+  }, [activeRoute, goalsDirty]);
 
   async function unlock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -87,6 +96,7 @@ function App() {
   }
 
   function lock() {
+    setGoalsDirty(false);
     clearApiToken();
     queryClient.clear();
     setSession(null);
@@ -185,7 +195,7 @@ function App() {
           <span className="api-pill"><i /> API connected</span>
         </header>
         <div className="route-body">
-          {activeRoute.id === "finance" ? <FinancePage /> : activeRoute.id === "health" ? <HealthPage /> : (
+          {activeRoute.id === "finance" ? <FinancePage /> : activeRoute.id === "health" ? <HealthPage /> : activeRoute.id === "goals" ? <GoalsPage onDirtyChange={setGoalsDirty} /> : (
             <EmptyState
               icon={routeIcons[activeRoute.id]}
               title={`${activeRoute.label} is ready for its data`}
@@ -198,7 +208,7 @@ function App() {
       <ConfirmationDialog
         open={confirmLock}
         title="Lock this session?"
-        description="Your in-memory token will be cleared. You will need to enter it again to reconnect."
+        description={goalsDirty ? "Your unsaved goal changes will be discarded and your token cleared." : "Your in-memory token will be cleared. You will need to enter it again to reconnect."}
         confirmLabel="Lock session"
         onConfirm={lock}
         onCancel={() => setConfirmLock(false)}
