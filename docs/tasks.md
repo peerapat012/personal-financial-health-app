@@ -70,7 +70,7 @@ Phase 4 reuses the goal models/tables from migration `0001`, existing finance/he
 
 ## Phase 5: Dashboard and experience
 
-- [x] Add Better Auth username/password sign-in, session handling, and FastAPI authorization integration. Dependency: deployed API and database.
+- [x] Add FastAPI-native single-owner username/password sign-in and hashed database sessions. Dependency: deployed API and database.
 - [x] Add the dashboard aggregation service and `/api/v1/dashboard?month=YYYY-MM`. Dependency: finance/health/goals services.
 - [x] Add Dashboard page cards for balances, monthly finance, budgets, health, goals, and recent transactions. Dependency: dashboard API.
 - [x] Add the month selector and correct Asia/Bangkok month boundaries. Dependency: Dashboard page.
@@ -80,19 +80,19 @@ Phase 4 reuses the goal models/tables from migration `0001`, existing finance/he
 - [x] Add Settings page for units/timezone display, session lock, app version, and API status. Dependency: session and app shell.
 - [x] Add a light, dark, and system theme switch with a persisted preference. Dependency: Settings page and app shell.
 
-Phase 5 implementation is complete locally: 18 API tests, the Better Auth username/bearer integration check, two desktop checks, and the desktop production build pass. Charts use native bars/SVG. Better Auth is not activated on a live database: deploy `apps/auth`, run its explicit auth-table migration, provision the owner, and configure FastAPI as described in `apps/auth/README.md`. Token mode remains active until then. PostgreSQL snapshot concurrency and native UI acceptance remain release checks.
+Phase 5 implementation is complete locally: 18 API tests, native username/session checks, two desktop checks, and the desktop production build pass. Charts use native bars/SVG. Deploy by running Alembic migration `0002` and the one-time FastAPI owner provisioning command. PostgreSQL snapshot concurrency and native UI acceptance remain release checks.
 
 ## Phase 6: data protection and release readiness
 
 - [ ] Add JSON export endpoint and desktop save-file flow. Dependency: auth, database snapshot, Tauri capability review.
 - [ ] Add explicit export confirmation and verify secrets are excluded. Dependency: export flow.
-- [ ] Add API tests for authentication, validation, 404/409/422 errors, and database rollback. Dependency: all implemented routes.
+- [ ] Expand API coverage for remaining validation, 404/409/422 errors, and database rollback paths. Dependency: all implemented routes.
 - [ ] Add PostgreSQL integration checks for transfer atomicity, category type rules, daily uniqueness, budget uniqueness, and goal references. Dependency: test database.
 - [ ] Add frontend checks for preserving form data on network failure and retrying a mutation with the same ID. Dependency: API client and mutation screens.
 - [ ] Add backup, restore, and migration runbook instructions to the README. Dependency: deployed test database.
 - [ ] Configure production CORS, HTTPS, request limits, restricted Tauri capabilities, and CSP. Dependency: deployed API and desktop shell.
 - [ ] Build the Windows installer and test CRUD on a machine without Node.js or Python. Dependency: all MVP screens.
-- [ ] Verify the desktop bundle and logs contain no Neon credential or personal token. Dependency: release build.
+- [ ] Verify the desktop bundle and logs contain no Neon credential, password, or session token. Dependency: release build.
 - [ ] Perform a final MVP acceptance pass against `spec.md`, `database.md`, and `api.md`. Dependency: all prior phases.
 
 ## Dependency and scope rules

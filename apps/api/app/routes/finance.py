@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.core.auth import require_personal_token
+from app.core.auth import require_session
 from app.core.errors import AppError
 from app.db import get_db
 from app.models.finance import Budget, Transaction
@@ -29,7 +29,7 @@ from app.services import finance
 
 router = APIRouter(
     prefix="/api/v1",
-    dependencies=[Depends(require_personal_token)],
+    dependencies=[Depends(require_session)],
 )
 Db = Annotated[Session, Depends(get_db)]
 PageLimit = Annotated[int, Query(ge=1, le=200)]

@@ -1,24 +1,39 @@
-import hashlib
 import unittest
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
-from app.core.config import Settings, get_settings
+from app.core.config import Settings
+from app.db import get_db
 from app.main import create_app
+from app.models.auth import AuthOwner, AuthSession
+from app.provision_owner import provision_owner
 
 
 class FoundationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        cls.engine = create_engine("sqlite://", poolclass=StaticPool, connect_args={"check_same_thread": False})
+        AuthOwner.__table__.create(cls.engine)
+        AuthSession.__table__.create(cls.engine)
+        with Session(cls.engine) as db:
+            provision_owner(db, "owner", "long-enough-password")
+
+        def database():
+            with Session(cls.engine, expire_on_commit=False) as db:
+                yield db
+
         app = create_app()
-        settings = Settings(
-            app_env="test",
-            database_url="postgresql+psycopg://user:pass@localhost/test",
-            database_direct_url="postgresql+psycopg://user:pass@localhost/test",
-            personal_api_token_sha256=hashlib.sha256(b"secret").hexdigest(),
-        )
-        app.dependency_overrides[get_settings] = lambda: settings
+        app.dependency_overrides[get_db] = database
         cls.client = TestClient(app)
+        cls.token = cls.client.post("/api/v1/auth/sign-in", json={"username": "owner", "password": "long-enough-password"}).json()["token"]
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.client.close()
+        cls.engine.dispose()
 
     def test_healthcheck(self) -> None:
         response = self.client.get("/healthz")
@@ -30,7 +45,6 @@ class FoundationTest(unittest.TestCase):
         settings = Settings(
             database_url="postgresql://user:pass@localhost/test",
             database_direct_url="postgresql://user:pass@localhost/test",
-            personal_api_token_sha256=hashlib.sha256(b"secret").hexdigest(),
         )
         self.assertTrue(settings.database_url.startswith("postgresql+psycopg://"))
 
@@ -42,7 +56,7 @@ class FoundationTest(unittest.TestCase):
         self.assertEqual(denied.json()["error"]["code"], "UNAUTHORIZED")
 
         allowed = self.client.get(
-            "/api/v1/session", headers={"Authorization": "Bearer secret"}
+            "/api/v1/session", headers={"Authorization": f"Bearer {self.token}"}
         )
         self.assertEqual(allowed.status_code, 200)
         self.assertEqual(allowed.json()["currency"], "THB")
@@ -51,7 +65,7 @@ class FoundationTest(unittest.TestCase):
         response = self.client.get(
             "/api/v1/session",
             headers={
-                "Authorization": "Bearer secret",
+                "Authorization": f"Bearer {self.token}",
                 "Origin": "http://localhost:5173",
             },
         )

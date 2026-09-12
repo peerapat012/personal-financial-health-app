@@ -1,57 +1,110 @@
 import unittest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from pydantic import ValidationError
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
+from sqlalchemy.pool import StaticPool
 
-from app.core.config import Settings, get_settings
-from app.core.errors import AppError
+from app.db import get_db
 from app.main import create_app
+from app.models.auth import AuthOwner, AuthSession
+from app.provision_owner import provision_owner
+from app.routes.auth import attempts
 
 
-class BetterAuthTest(unittest.TestCase):
-    def setUp(self):
-        self.settings = Settings(
-            database_url="postgresql://user:pass@localhost/test", database_direct_url="postgresql://user:pass@localhost/test",
-            auth_mode="better_auth", better_auth_url="http://127.0.0.1:3001", owner_user_id="owner-id",
+class NativeAuthTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.engine = create_engine(
+            "sqlite://", poolclass=StaticPool, connect_args={"check_same_thread": False}
         )
+        AuthOwner.__table__.create(self.engine)
+        AuthSession.__table__.create(self.engine)
+        with Session(self.engine) as db:
+            provision_owner(db, "Owner", "long-enough-password")
+
+        def database():
+            with Session(self.engine, expire_on_commit=False) as db:
+                yield db
+
         app = create_app()
-        app.dependency_overrides[get_settings] = lambda: self.settings
+        app.dependency_overrides[get_db] = database
         self.client = TestClient(app)
+        attempts.clear()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         self.client.close()
+        self.engine.dispose()
 
-    def session(self, user="owner-id", expired=False):
-        return {"user": {"id": user}, "session": {"userId": user, "expiresAt": (datetime.now(timezone.utc) + timedelta(hours=-1 if expired else 1)).isoformat()}}
+    def sign_in(self):
+        return self.client.post(
+            "/api/v1/auth/sign-in",
+            json={"username": "owner", "password": "long-enough-password"},
+        )
 
-    def test_owner_only_expiry_and_missing_credentials(self):
-        self.assertEqual(self.client.get("/api/v1/auth/config").json(), {"mode": "better_auth"})
+    def test_sign_in_stores_only_hash_and_sign_out_revokes(self) -> None:
+        response = self.sign_in()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["cache-control"], "no-store")
+        token = response.json()["token"]
+        with Session(self.engine) as db:
+            stored = db.scalar(select(AuthSession))
+            owner = db.get(AuthOwner, 1)
+            self.assertTrue(owner.password_hash.startswith("$argon2"))
+            self.assertNotIn("long-enough-password", owner.password_hash)
+            self.assertNotEqual(stored.token_hash, token)
+            self.assertEqual(len(stored.token_hash), 64)
+
+        headers = {"Authorization": f"Bearer {token}"}
+        self.assertEqual(self.client.get("/api/v1/session", headers=headers).status_code, 200)
+        self.assertEqual(self.client.post("/api/v1/auth/sign-out", headers=headers).status_code, 204)
+        self.assertEqual(self.client.get("/api/v1/session", headers=headers).status_code, 401)
+
+    def test_invalid_expired_and_rate_limited_sessions(self) -> None:
         self.assertEqual(self.client.get("/api/v1/session").status_code, 401)
-        for payload, expected in ((self.session(), 200), (self.session("other"), 401), (self.session(expired=True), 401), (None, 401), ({}, 401)):
-            with self.subTest(expected=expected), patch("app.core.better_auth.auth_request", return_value=payload):
-                self.assertEqual(self.client.get("/api/v1/session", headers={"Authorization": "Bearer opaque-session"}).status_code, expected)
-        with patch("app.core.better_auth.auth_request", side_effect=AppError(503, "AUTH_UNAVAILABLE", "Unavailable")):
-            self.assertEqual(self.client.get("/api/v1/session", headers={"Authorization": "Bearer opaque-session"}).status_code, 503)
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/auth/sign-in",
+                json={"username": "owner", "password": "wrong-password"},
+            ).status_code,
+            401,
+        )
+        attempts.clear()
+        for _ in range(5):
+            self.client.post(
+                "/api/v1/auth/sign-in",
+                json={"username": "missing", "password": "wrong-password"},
+            )
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/auth/sign-in",
+                json={"username": "owner", "password": "long-enough-password"},
+            ).status_code,
+            429,
+        )
+        attempts.clear()
+        token = self.sign_in().json()["token"]
+        with Session(self.engine) as db:
+            session = db.scalar(select(AuthSession))
+            session.expires_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+            db.commit()
+        self.assertEqual(
+            self.client.get(
+                "/api/v1/session", headers={"Authorization": f"Bearer {token}"}
+            ).status_code,
+            401,
+        )
 
-    def test_sign_in_returns_only_verified_token_and_sign_out_revokes(self):
-        with patch("app.routes.auth.auth_request", return_value={"token": "opaque-session"}) as request, patch("app.core.better_auth.auth_request", return_value=self.session()):
-            response = self.client.post("/api/v1/auth/sign-in", json={"username": "owner", "password": "long-enough-password"})
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.json(), {"token": "opaque-session"})
-            self.assertEqual(response.headers["cache-control"], "no-store")
-            self.assertEqual(self.client.post("/api/v1/auth/sign-out", headers={"Authorization": "Bearer opaque-session"}).status_code, 204)
-            self.assertEqual(request.call_args.args[1], "sign-out")
-        with patch("app.routes.auth.auth_request", return_value={"token": "someone-else"}), patch("app.core.better_auth.auth_request", return_value=self.session("other")):
-            self.assertEqual(self.client.post("/api/v1/auth/sign-in", json={"username": "other", "password": "long-enough-password"}).status_code, 401)
-        self.assertEqual(self.client.post("/api/v1/auth/sign-in", json={"username": "bad user", "password": "x"}).status_code, 422)
-
-    def test_auth_configuration_fails_closed(self):
-        values = self.settings.model_dump()
-        for changes in ({"owner_user_id": None}, {"better_auth_url": None}, {"better_auth_url": "http://remote.example.com"}, {"better_auth_url": "https://user:pass@example.com"}):
-            with self.assertRaises(ValidationError):
-                Settings(**(values | changes))
+    def test_owner_is_singleton_and_inputs_are_validated(self) -> None:
+        self.assertEqual(self.client.get("/api/v1/auth/config").status_code, 404)
+        with Session(self.engine) as db, self.assertRaises(ValueError):
+            provision_owner(db, "other", "another-long-password")
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/auth/sign-in", json={"username": "bad user", "password": "x"}
+            ).status_code,
+            422,
+        )
 
 
 if __name__ == "__main__":

@@ -4,14 +4,14 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.core.auth import require_personal_token
+from app.core.auth import require_session
 from app.core.errors import AppError
 from app.db import get_db
 from app.schemas.dashboard import DashboardResponse
 from app.schemas.finance import Month
 from app.services.dashboard import get_dashboard
 
-router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_personal_token)])
+router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_session)])
 
 
 @router.get("/dashboard", response_model=DashboardResponse)

@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.core.auth import require_personal_token
+from app.core.auth import require_session
 from app.schemas.system import HealthResponse, SessionResponse
 
 router = APIRouter()
@@ -14,5 +14,5 @@ def healthcheck() -> HealthResponse:
 
 
 @router.get("/api/v1/session", response_model=SessionResponse)
-def session(_: Annotated[None, Depends(require_personal_token)]) -> SessionResponse:
+def session(_: Annotated[None, Depends(require_session)]) -> SessionResponse:
     return SessionResponse()

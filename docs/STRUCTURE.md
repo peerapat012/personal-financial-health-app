@@ -36,7 +36,7 @@ project-root/
 
 Create directories and files only when a feature needs them. This tree describes ownership, not a demand to scaffold empty folders now.
 
-Phase 5 additionally owns `apps/auth/`: the Node Better Auth service, explicit auth-table migration and owner provisioning commands, and their focused integration check. Desktop requests still go through FastAPI. Auth tables are prefixed `auth_*` and kept separate from the business models.
+Authentication lives in `apps/api`: `core/auth.py` owns hashing and sessions, `models/auth.py` owns the two auth tables, and `provision_owner.py` is the local one-time provisioning command. There is no second service.
 
 ## Desktop directories
 

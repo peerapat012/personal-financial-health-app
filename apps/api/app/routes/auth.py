@@ -1,17 +1,22 @@
+from collections import deque
+from threading import Lock
+from time import monotonic
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response
 from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import Field
+from sqlalchemy.orm import Session
 
-from app.core.auth import bearer
-from app.core.better_auth import auth_request, verify_session
-from app.core.config import Settings, get_settings
+from app.core.auth import bearer, create_session, require_session, revoke_session
 from app.core.errors import AppError
+from app.db import get_db
 from app.schemas.finance import WireModel
 
 router = APIRouter(prefix="/api/v1/auth")
-Config = Annotated[Settings, Depends(get_settings)]
+Db = Annotated[Session, Depends(get_db)]
+attempts: deque[float] = deque()
+attempts_lock = Lock()
 
 
 class SignIn(WireModel):
@@ -23,28 +28,34 @@ class SignInResponse(WireModel):
     token: str
 
 
-@router.get("/config")
-def auth_config(settings: Config):
-    return {"mode": settings.auth_mode}
-
-
 @router.post("/sign-in", response_model=SignInResponse)
-def sign_in(data: SignIn, settings: Config, response: Response):
+def sign_in(data: SignIn, db: Db, response: Response):
     response.headers["Cache-Control"] = "no-store"
-    if settings.auth_mode != "better_auth":
-        raise AppError(404, "NOT_FOUND", "Username sign-in is not enabled")
-    result = auth_request(settings, "sign-in/username", body=data.model_dump())
-    token = result.get("token") if isinstance(result, dict) else None
-    if not isinstance(token, str):
-        raise AppError(503, "AUTH_UNAVAILABLE", "Sign-in service returned an invalid response")
-    verify_session(settings, token)
+    now = monotonic()
+    with attempts_lock:
+        while attempts and attempts[0] <= now - 60:
+            attempts.popleft()
+        if len(attempts) >= 5:
+            raise AppError(429, "RATE_LIMITED", "Too many sign-in attempts. Try again later.")
+    try:
+        token = create_session(db, data.username, data.password)
+    except AppError as error:
+        # ponytail: one API process uses a global limit; move attempts to the database before adding replicas.
+        if error.status_code == 401:
+            with attempts_lock:
+                attempts.append(now)
+        raise
+    with attempts_lock:
+        attempts.clear()
     return SignInResponse(token=token)
 
 
 @router.post("/sign-out", status_code=204)
-def sign_out(settings: Config, credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)]):
+def sign_out(
+    db: Db,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    _: Annotated[None, Depends(require_session)],
+):
     token = credentials.credentials if credentials else ""
-    if settings.auth_mode == "better_auth" and token:
-        verify_session(settings, token)
-        auth_request(settings, "sign-out", token=token, body={})
+    revoke_session(db, token)
     return Response(status_code=204)

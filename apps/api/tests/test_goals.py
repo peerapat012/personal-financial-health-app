@@ -1,4 +1,3 @@
-import hashlib
 import unittest
 from datetime import timedelta
 from decimal import Decimal
@@ -9,14 +8,15 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from app.core.config import Settings, get_settings
 from app.core.time import today_bangkok
 from app.db import get_db
 from app.main import create_app
+from app.models.auth import AuthOwner, AuthSession
 from app.models.finance import Account, Category, Transaction
 from app.models.goals import FinancialGoal, HealthGoal
 from app.models.health import WeightLog, Workout
 from app.services.goals import progress
+from app.provision_owner import provision_owner
 
 
 class GoalsTest(unittest.TestCase):
@@ -30,29 +30,25 @@ class GoalsTest(unittest.TestCase):
             connection.create_function("char_length", 1, lambda value: len(value) if value else 0)
             connection.execute("PRAGMA foreign_keys=ON")
 
-        for model in (Account, Category, Transaction, WeightLog, Workout, FinancialGoal, HealthGoal):
+        for model in (AuthOwner, AuthSession, Account, Category, Transaction, WeightLog, Workout, FinancialGoal, HealthGoal):
             model.__table__.create(self.engine)
         self.today = today_bangkok()
         self.start = self.today - timedelta(days=7)
         self.account_id = uuid4()
         with Session(self.engine) as db:
+            provision_owner(db, "owner", "long-enough-password")
             db.add(Account(id=self.account_id, name="Cash", kind="cash", opening_balance=Decimal("100.00"), opening_date=self.start))
             db.commit()
         app = create_app()
-        settings = Settings(
-            app_env="test", database_url="postgresql+psycopg://user:pass@localhost/test",
-            database_direct_url="postgresql+psycopg://user:pass@localhost/test",
-            personal_api_token_sha256=hashlib.sha256(b"secret").hexdigest(),
-        )
 
         def database():
             with Session(self.engine, expire_on_commit=False) as db:
                 yield db
 
-        app.dependency_overrides[get_settings] = lambda: settings
         app.dependency_overrides[get_db] = database
         self.client = TestClient(app)
-        self.headers = {"Authorization": "Bearer secret"}
+        token = self.client.post("/api/v1/auth/sign-in", json={"username": "owner", "password": "long-enough-password"}).json()["token"]
+        self.headers = {"Authorization": f"Bearer {token}"}
 
     def tearDown(self):
         self.client.close()

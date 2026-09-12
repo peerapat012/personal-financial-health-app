@@ -2,7 +2,7 @@
 
 ## Common contract
 
-The API is JSON over HTTPS in production. Business endpoints use `/api/v1` and require `Authorization: Bearer <token>`. In Better Auth mode the token is a verified session belonging to the configured owner; explicit legacy mode accepts the personal token. `GET /healthz` is unauthenticated liveness only. IDs are UUID strings, dates are `YYYY-MM-DD`, timestamps are ISO 8601 UTC, and money and weight values are decimal strings.
+The API is JSON over HTTPS in production. Business endpoints use `/api/v1` and require `Authorization: Bearer <token>`. The token is an opaque database session for the single provisioned owner. `GET /healthz` and sign-in are unauthenticated. IDs are UUID strings, dates are `YYYY-MM-DD`, timestamps are ISO 8601 UTC, and money and weight values are decimal strings.
 
 List responses use:
 
@@ -29,11 +29,13 @@ Common errors are 401 authentication failure, 404 missing ID, 409 duplicate/refe
 
 ## System endpoints
 
-Phase 5 adds `GET /api/v1/auth/config` (public, returns `{"mode":"personal_token"}` or `{"mode":"better_auth"}`), `POST /api/v1/auth/sign-in` (public, accepts `{"username":"owner","password":"..."}`, returns only `{"token":"..."}` with `Cache-Control: no-store`), and `POST /api/v1/auth/sign-out` (uses the bearer session and revokes it, 204). Sign-in is available only in Better Auth mode. Public signup is not exposed. Invalid/non-owner sessions return 401, rate limits return 429, and auth-service failure returns 503. Desktop credentials and tokens are never persisted.
+`POST /api/v1/auth/sign-in` is public, accepts `{"username":"owner","password":"..."}`, and returns only `{"token":"..."}` with `Cache-Control: no-store`. `POST /api/v1/auth/sign-out` requires and revokes the bearer session, returning 204. Public signup is not exposed. Invalid credentials or sessions return 401 and the in-process sign-in limit returns 429. Desktop credentials and tokens are never persisted.
 
 | Method | Path | Purpose | Request/query | Response |
 |---|---|---|---|---|
 | GET | `/healthz` | Liveness check. Must not expose database details. | None | `{ "status": "ok" }` |
+| POST | `/api/v1/auth/sign-in` | Verify the owner and create a session. | `{ "username": "owner", "password": "..." }` | `{ "token": "..." }` |
+| POST | `/api/v1/auth/sign-out` | Revoke the current session. | Bearer token | 204 |
 | GET | `/api/v1/session` | Validate the token and return V1 display settings. | None | `{ "authenticated": true, "currency": "THB", "timezone": "Asia/Bangkok", "units": {"weight": "kg", "water": "ml"} }` |
 | GET | `/api/v1/export` | Return a consistent JSON snapshot for user export. | None | `{ "schema_version": "1", "exported_at": "...", "data": { ... } }` |
 

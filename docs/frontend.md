@@ -829,7 +829,7 @@ The first usable desktop version should focus on:
 
 ## Post-install flow
 
-Use one compact welcome/sign-in screen. Discover the configured mode from FastAPI: username/password when Better Auth is active, or the existing personal-token form during activation. The desktop saves neither credentials nor session tokens. Show connecting, invalid-credentials, expired-session, and API-unavailable states. On success, open Dashboard. Guide empty states toward creating an account, recording a transaction, or beginning with Health. Avoid a multi-step wizard, sample data, and tutorial carousel.
+Use one compact username/password sign-in screen. The desktop saves neither credentials nor session tokens. Show connecting, invalid-credentials, rate-limit, expired-session, and API-unavailable states. On success, open Dashboard. Guide empty states toward creating an account, recording a transaction, or beginning with Health. Avoid a multi-step wizard, sample data, and tutorial carousel.
 
 Do not add advanced UI for future features before those features actually enter the implementation plan.
 

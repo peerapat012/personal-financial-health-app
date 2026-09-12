@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.core.auth import require_personal_token
+from app.core.auth import require_session
 from app.core.errors import AppError
 from app.core.time import today_bangkok
 from app.db import get_db
@@ -21,7 +21,7 @@ from app.schemas.health import (
 )
 from app.services import health
 
-router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_personal_token)])
+router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_session)])
 Db = Annotated[Session, Depends(get_db)]
 PageLimit = Annotated[int, Query(ge=1, le=200)]
 PageOffset = Annotated[int, Query(ge=0)]

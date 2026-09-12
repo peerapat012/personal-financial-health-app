@@ -2,10 +2,10 @@
 
 ## Conventions
 
-The database is PostgreSQL on Neon in the `public` schema. Business tables belong to one authenticated owner's data set. Phase 5 adds Better Auth tables named `auth_user`, `auth_session`, `auth_account`, and `auth_verification`; they have no foreign keys to business tables. FastAPI accepts only the configured owner ID. Multi-user ownership/isolation remains out of scope.
+The database is PostgreSQL on Neon in the `public` schema. Business tables belong to one authenticated owner's data set. FastAPI owns the `auth_owner` and `auth_sessions` tables. Multi-user ownership/isolation remains out of scope.
 
-- Primary keys are UUIDs. Client-created POST resources use a UUID supplied by the desktop so a timed-out request can be checked or retried with the same ID. Server-created IDs, such as a first daily log if needed, use PostgreSQL or Python UUID generation consistently.
-- Every table has `created_at timestamptz NOT NULL` and `updated_at timestamptz NOT NULL`. The backend/database supplies UTC timestamps.
+- Business-resource primary keys are UUIDs. Client-created POST resources use a UUID supplied by the desktop so a timed-out request can be checked or retried with the same ID. Authentication tables use the fixed owner ID and session-token digest described below.
+- Every business table and the owner row have `created_at timestamptz NOT NULL` and `updated_at timestamptz NOT NULL`. The backend/database supplies UTC timestamps.
 - Activity and reporting dates use PostgreSQL `date` and represent `Asia/Bangkok` calendar dates.
 - Money uses `numeric(14,2)`, mapped to Python `Decimal` and serialized as a JSON decimal string such as `"1250.50"`. PostgreSQL `numeric` is exact and avoids binary floating-point errors.
 - Weight uses `numeric(5,2)` in kilograms. Durations and counts use integer types.
@@ -15,6 +15,26 @@ The database is PostgreSQL on Neon in the `public` schema. Business tables belon
 - V1 has no general soft-delete column. Accounts, categories, and goals use `archived_at`; transactions, budgets, weight logs, and workouts are hard-deleted only after confirmation.
 
 ## Tables
+
+### `auth_owner`
+
+| Column | Type | Rules |
+|---|---|---|
+| `id` | integer | PK; constrained to `1` |
+| `username` | varchar(30) | required, unique, lowercase |
+| `password_hash` | text | required Argon2 hash; never returned |
+| `created_at`, `updated_at` | timestamptz | required |
+
+The local provisioning command creates the only row and refuses to replace it.
+
+### `auth_sessions`
+
+| Column | Type | Rules |
+|---|---|---|
+| `token_hash` | varchar(64) | PK; SHA-256 digest of the opaque bearer token |
+| `expires_at` | timestamptz | required; indexed |
+
+Raw session tokens are returned once at sign-in and never persisted by the API or desktop.
 
 ### `accounts`
 
@@ -204,4 +224,4 @@ The backend/database writes `created_at` and `updated_at` in UTC. User-facing fi
 
 ## Migration strategy
 
-Alembic is the authoritative business schema history. The initial migration creates all eight business tables, constraints, indexes, and seed categories. Each later business schema change updates the SQLAlchemy model and adds a reviewed forward migration. Phase 5's Better Auth service manages its four prefixed auth tables separately through `npm run migrate` in `apps/auth`, using the installed/pinned library schema and a direct migration connection. Neither service auto-migrates on startup. Backups are taken before production migrations.
+Alembic is the authoritative schema history. The initial migration creates all eight business tables, constraints, indexes, and seed categories. Migration `0002` adds FastAPI-owned authentication tables and removes the obsolete Better Auth tables. Each schema change updates the SQLAlchemy model and adds a reviewed forward migration. The API never migrates on startup. Backups are taken before production migrations.

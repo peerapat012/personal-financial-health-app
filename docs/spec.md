@@ -67,7 +67,7 @@ Goal progress is calculated from current canonical data. A goal is a milestone a
 
 ## Main user flows
 
-1. After installation, the app connects to the deployed API and discovers its sign-in mode. With Better Auth activated, the owner enters username/password; the API verifies the session and owner ID. Legacy token mode remains available until activation. Both modes hold tokens only in memory.
+1. After installation, the owner enters the provisioned username/password. FastAPI verifies the password and issues an opaque session token held only in desktop memory.
 2. The user opens Dashboard, chooses a month, and sees finance, health, and active-goal summaries.
 3. The user creates an account and categories, then records income, expenses, and transfers from Finance.
 4. The user creates a monthly category budget and compares actual expense totals with the budget.
@@ -135,7 +135,7 @@ Progress is clamped to 0–100% for display while the raw ratio remains availabl
 - Windows is the first build and test target; the installer must run without Node.js or Python installed.
 - Production API traffic uses HTTPS. The desktop release uses a restricted Tauri capability set and production CSP.
 - A warm backend with ordinary V1 data should return list and summary requests promptly; measure before adding infrastructure.
-- Use one FastAPI business API, one small Better Auth service, one Neon database, and one desktop client. Alembic manages business tables; Better Auth manages only its prefixed auth tables through an explicit command.
+- Use one FastAPI API, one Neon database, and one desktop client. Alembic manages the complete schema.
 - Use strict TypeScript, Pydantic validation, SQLAlchemy, and Alembic. Use Zod where it improves a frontend boundary, not for every type.
 - Keep API errors predictable with an error code, human-readable message, optional field details, and request ID.
 - Loading, empty, network failure, and server error states are part of every data screen.
@@ -143,8 +143,8 @@ Progress is clamped to 0–100% for display while the raw ratio remains availabl
 ## Security and privacy expectations
 
 - Neon credentials exist only in backend environment variables. They must never appear in Vite variables, Tauri assets, Rust constants, logs, or API responses.
-- Phase 5 authentication uses Better Auth with one provisioned owner, disabled public signup, and owner-ID verification in FastAPI. Legacy personal-token mode is retained until activation; the modes never silently fall back to each other.
-- Locking or closing clears local token and client data. Lock also attempts Better Auth session revocation; unconfirmed revocation is reported. The backend rejects expired/revoked sessions. In legacy mode, revoke a compromised token by rotating the digest.
+- Authentication uses `pwdlib[argon2]` for one locally provisioned owner and exposes no signup endpoint. Opaque session tokens are stored only as hashes in PostgreSQL and expire after 12 hours.
+- Locking or closing clears local session data. Lock also attempts server-side session revocation; unconfirmed revocation is reported. The backend rejects expired or revoked sessions.
 - Production database runtime credentials use a restricted role. Migration credentials are separate and are never shipped to the desktop.
 - Logs exclude authorization headers, tokens, database URLs, notes, request bodies, and personal finance or health values.
 - The app does not claim that a client-side lock protects data from malware or a user who already controls the machine.

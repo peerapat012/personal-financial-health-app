@@ -16,7 +16,7 @@ SQLAlchemy
 Neon PostgreSQL
 ```
 
-There is one business API and one database. Phase 5 adds a private Node Better Auth service for identity/session handling. The desktop still talks only to FastAPI over HTTPS and must never connect to Neon or bundle `DATABASE_URL`.
+There is one FastAPI service and one database. The desktop talks only to FastAPI over HTTPS and must never connect to Neon or bundle `DATABASE_URL`.
 
 ## Responsibilities
 
@@ -59,19 +59,17 @@ Dashboard and export reads should use a consistent read transaction so their com
 
 ## Authentication
 
-Phase 5 implements Better Auth username/password sign-in. `apps/auth` is a small Node service using the username and bearer plugins with PostgreSQL. FastAPI proxies sign-in/sign-out and verifies each bearer session through Better Auth, requiring the configured `OWNER_USER_ID`. The desktop discovers the configured mode through `/api/v1/auth/config`, then keeps the resulting token only in memory.
+FastAPI implements username/password sign-in for one provisioned owner. `pwdlib[argon2]` hashes the password. Successful sign-in returns a random opaque bearer token; only its SHA-256 digest and 12-hour expiry are stored in PostgreSQL. The desktop keeps the raw token only in memory.
 
 The post-install flow is client-side session gating, not a persisted onboarding system. Successful `/api/v1/session` validation opens Dashboard; missing data is handled by normal feature empty states. No onboarding table, completion flag, or additional endpoint is required.
 
-Public signup and profile mutation endpoints are blocked. Owner provisioning is a local command that refuses a second owner. Better Auth owns four prefixed auth tables; business tables still have no user ownership columns and remain one owner's data. Locking clears local memory immediately and attempts server revocation; failure is reported. Session expiry returns the desktop to sign-in. This introduces no JWT or desktop token persistence.
-
-Until deployment/owner provisioning is complete, explicit `AUTH_MODE=personal_token` retains the original digest-verified token flow. `AUTH_MODE=better_auth` requires its service URL and owner ID and never falls back to personal tokens. Invalid credentials and non-owner sessions return 401; an unavailable auth service returns 503. See `apps/auth/README.md` for activation.
+Public signup and profile mutation endpoints do not exist. `python -m app.provision_owner` refuses a second owner. Alembic owns `auth_owner` and `auth_sessions`; business tables still have no user ownership columns and remain one owner's data. Locking clears local memory immediately and attempts server revocation; failure is reported. Expired or revoked sessions return the desktop to sign-in. There are no JWTs, personal-token mode, or persisted desktop credentials.
 
 Before multiple devices can edit data concurrently, add optimistic concurrency and a conflict policy. Before multi-user access, redesign identity, ownership, authorization, and database isolation.
 
 ## Configuration and secrets
 
-Backend environment variables include `DATABASE_URL`, token digest, CORS origins, environment, log level, and host port. Runtime uses the Neon pooled URL. Alembic and backup operations use a separate direct URL and migration role. `.env.example` contains placeholders only.
+Backend environment variables include `DATABASE_URL`, `DATABASE_DIRECT_URL`, CORS origins, environment, log level, and host port. Runtime uses the Neon pooled URL. Alembic, owner provisioning, and backup operations use the separate direct URL and migration role. `.env.example` contains placeholders only.
 
 The desktop may know only the public API base URL. A Vite environment variable containing the API URL is configuration, not a secret. No database URL, migration secret, token, or private key may enter the bundle, Tauri config, Rust source, or logs.
 
@@ -108,7 +106,7 @@ Business endpoints use `/api/v1`. Breaking response or behavior changes require 
 
 ## Database and migration approach
 
-Use SQLAlchemy 2 with synchronous `psycopg` and one session per request. Routes remain synchronous when using the synchronous database driver. Alembic owns business schema migrations. The Phase 5 auth service uses Better Auth's explicit migration command only for its four `auth_*` tables; this is the deliberate exception to the original single migration stream. Neither service migrates at startup. Runtime and migration roles are separate. Development, test, and production databases are separate.
+Use SQLAlchemy 2 with synchronous `psycopg` and one session per request. Routes remain synchronous when using the synchronous database driver. Alembic owns the complete schema, including authentication tables; the API never migrates on startup. Runtime and migration roles are separate. Development, test, and production databases are separate.
 
 ## Future mobile architecture
 
@@ -123,5 +121,5 @@ A future mobile client consumes the same HTTPS JSON API and never connects to Ne
 | Direct route-to-service-to-model flow | Avoids repository and use-case abstractions with no second implementation. |
 | Neon is the only V1 store | Avoids sync, cache invalidation, and offline complexity. |
 | Server-derived balances and summaries | Prevents duplicated money logic and stale cached totals. |
-| Better Auth with an explicit owner ID | Adds username/password sessions while preserving single-owner business data. Token mode is retained only for the activation transition. |
+| FastAPI-native single-owner authentication | Keeps password verification, sessions, and business authorization in one deployable service. |
 | Calendar dates plus UTC timestamps | Makes personal daily records predictable in `Asia/Bangkok` while keeping audit timestamps unambiguous. |

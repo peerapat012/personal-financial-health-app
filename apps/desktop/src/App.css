@@ -151,10 +151,6 @@
   line-height: .93;
 }
 .session-lede { max-width: 35rem; margin-top: 2rem; color: var(--muted-foreground); font-size: 1.05rem; line-height: 1.75; }
-.privacy-points { display: grid; gap: .7rem; margin-top: 2rem; font-size: .86rem; font-weight: 600; }
-.privacy-points p { display: flex; align-items: center; gap: .65rem; }
-.privacy-points svg { width: 1rem; color: var(--primary); }
-
 .session-card {
   display: grid;
   gap: .85rem;
@@ -180,10 +176,9 @@
 }
 .session-card > input:focus-visible { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring), transparent 75%); outline: none; }
 .session-card > input[aria-invalid="true"] { border-color: var(--destructive); }
-.field-help, .connection-status { color: var(--muted-foreground); font-size: .72rem; }
+.field-help { color: var(--muted-foreground); font-size: .72rem; }
 .form-error { color: var(--destructive); font-size: .8rem; }
 .session-submit { height: 3rem; margin-top: .7rem; justify-content: space-between; padding-inline: 1rem; }
-.connection-status { text-align: center; }
 
 .app-shell { display: grid; min-height: 100vh; grid-template-columns: 17rem 1fr; }
 .app-sidebar { display: flex; flex-direction: column; gap: 2.2rem; border-right: 1px solid var(--sidebar-border); background: var(--sidebar); padding: 1.5rem; color: var(--sidebar-foreground); }

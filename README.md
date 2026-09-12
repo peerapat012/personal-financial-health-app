@@ -38,8 +38,14 @@ Check database connectivity with `uv run python -m app.check_db`. Run migrations
 
 ### Username/password sign-in
 
-Phase 5 adds a private Better Auth service in [`apps/auth`](apps/auth/README.md). Follow its setup instructions to migrate auth tables, provision the single owner, and activate `AUTH_MODE=better_auth` in FastAPI. Existing token sign-in remains active until that configuration changes. The desktop discovers the configured sign-in mode automatically.
+FastAPI owns the single username/password account and its database sessions. After migrating, provision the owner once from `apps/api`; the command prompts without echoing the password:
+
+```powershell
+uv run python -m app.provision_owner owner
+```
+
+Passwords must be 12-128 characters. The command refuses to replace an existing owner. Migration `0002` removes legacy Better Auth tables, so back up the database and keep the new owner password ready before upgrading an activated installation.
 
 ### Checks
 
-Run `uv run python -m unittest discover -s tests -v` in `apps/api`, `npm test` in `apps/auth`, and `npm test` plus `npm run build` in `apps/desktop`.
+Run `uv run python -m unittest discover -s tests -v` in `apps/api`, and `npm test` plus `npm run build` in `apps/desktop`.

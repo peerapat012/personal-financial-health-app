@@ -4,14 +4,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
-from app.core.auth import require_personal_token
+from app.core.auth import require_session
 from app.db import get_db
 from app.models.goals import FinancialGoal, HealthGoal
 from app.schemas.finance import ListResponse
 from app.schemas.goals import FinancialGoalCreate, FinancialGoalResponse, GoalPatch, HealthGoalCreate, HealthGoalResponse
 from app.services import goals
 
-router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_personal_token)])
+router = APIRouter(prefix="/api/v1", dependencies=[Depends(require_session)])
 Db = Annotated[Session, Depends(get_db)]
 PageLimit = Annotated[int, Query(ge=1, le=200)]
 PageOffset = Annotated[int, Query(ge=0)]
