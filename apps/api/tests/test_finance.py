@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import Mock
 from datetime import date
 from decimal import Decimal
 from types import SimpleNamespace
@@ -6,11 +7,14 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 from sqlalchemy import create_engine, event
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.errors import AppError
 from app.models.finance import Account, Category, Transaction
 from app.schemas.finance import AccountCreate, CategoryCreate, TransactionCreate
 from app.services.finance import (
+    _commit,
     create_account,
     create_category,
     create_transaction,
@@ -20,6 +24,14 @@ from app.services.finance import (
 
 
 class FinanceRulesTest(unittest.TestCase):
+    def test_failed_commit_rolls_back(self) -> None:
+        db = Mock(spec=Session)
+        db.commit.side_effect = IntegrityError("insert", {}, Exception("duplicate"))
+        with self.assertRaises(AppError) as raised:
+            _commit(db, "Already exists")
+        self.assertEqual(raised.exception.status_code, 409)
+        db.rollback.assert_called_once_with()
+
     def test_transaction_shape_and_monthly_totals(self) -> None:
         account_id = uuid4()
         category_id = uuid4()

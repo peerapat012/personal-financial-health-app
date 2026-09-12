@@ -84,15 +84,16 @@ Phase 5 implementation is complete locally: 18 API tests, native username/sessio
 
 ## Phase 6: data protection and release readiness
 
-- [ ] Add JSON export endpoint and desktop save-file flow. Dependency: auth, database snapshot, Tauri capability review.
-- [ ] Add explicit export confirmation and verify secrets are excluded. Dependency: export flow.
-- [ ] Expand API coverage for remaining validation, 404/409/422 errors, and database rollback paths. Dependency: all implemented routes.
-- [ ] Add PostgreSQL integration checks for transfer atomicity, category type rules, daily uniqueness, budget uniqueness, and goal references. Dependency: test database.
-- [ ] Add frontend checks for preserving form data on network failure and retrying a mutation with the same ID. Dependency: API client and mutation screens.
-- [ ] Add backup, restore, and migration runbook instructions to the README. Dependency: deployed test database.
-- [ ] Configure production CORS, HTTPS, request limits, restricted Tauri capabilities, and CSP. Dependency: deployed API and desktop shell.
-- [ ] Build the Windows installer and test CRUD on a machine without Node.js or Python. Dependency: all MVP screens.
-- [ ] Verify the desktop bundle and logs contain no Neon credential, password, or session token. Dependency: release build.
+- [x] Add JSON export endpoint and desktop save-file flow. Dependency: auth, database snapshot, Tauri capability review.
+- [x] Add explicit export confirmation and verify secrets are excluded. Dependency: export flow.
+- [x] Expand API coverage for remaining validation, 404/409/422 errors, and database rollback paths. Dependency: all implemented routes.
+- [x] Add PostgreSQL integration checks for transfer atomicity, category type rules, daily uniqueness, budget uniqueness, and goal references. Dependency: test database.
+- [x] Add frontend checks for preserving form data on network failure and retrying a mutation with the same ID. Dependency: API client and mutation screens.
+- [x] Add backup, restore, and migration runbook instructions to the README. Dependency: deployed test database.
+- [x] Configure production CORS, HTTPS, request limits, restricted Tauri capabilities, and CSP. Dependency: deployed API and desktop shell.
+- [x] Build the Windows installer. Dependency: all MVP screens.
+- [ ] Test installer CRUD on a machine without Node.js or Python. Dependency: Windows installer.
+- [x] Verify the desktop bundle and logs contain no Neon credential, password, or session token. Dependency: release build.
 - [ ] Perform a final MVP acceptance pass against `spec.md`, `database.md`, and `api.md`. Dependency: all prior phases.
 
 ## Dependency and scope rules

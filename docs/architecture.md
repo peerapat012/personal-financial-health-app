@@ -71,6 +71,8 @@ Before multiple devices can edit data concurrently, add optimistic concurrency a
 
 Backend environment variables include `DATABASE_URL`, `DATABASE_DIRECT_URL`, CORS origins, environment, log level, and host port. Runtime uses the Neon pooled URL. Alembic, owner provisioning, and backup operations use the separate direct URL and migration role. `.env.example` contains placeholders only.
 
+In production, HTTPS redirect and trusted-host middleware are enabled, CORS is restricted to configured origins, and request bodies are capped at 1 MiB. The desktop CSP permits only packaged assets and HTTPS API connections; its native capability grants only the save dialog and text-file write needed for an explicitly confirmed export.
+
 The desktop may know only the public API base URL. A Vite environment variable containing the API URL is configuration, not a secret. No database URL, migration secret, token, or private key may enter the bundle, Tauri config, Rust source, or logs.
 
 ## Error handling

@@ -37,8 +37,10 @@ class CorsSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     cors_origins: str = DEFAULT_CORS_ORIGINS
+    app_env: Literal["development", "test", "production"] = "development"
+    allowed_hosts: str = "localhost,127.0.0.1"
 
 
 @lru_cache
-def get_cors_origins() -> str:
-    return CorsSettings().cors_origins
+def get_http_settings() -> CorsSettings:
+    return CorsSettings()

@@ -21,11 +21,12 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   return <section className="feedback-state" role="alert"><AlertTriangle /><h3>Something went wrong</h3><p>{message}</p>{onRetry && <Button onClick={onRetry}>Try again</Button>}</section>;
 }
 
-export function ConfirmationDialog({ open, title, description, confirmLabel = "Confirm", onConfirm, onCancel }: {
+export function ConfirmationDialog({ open, title, description, confirmLabel = "Confirm", destructive = true, onConfirm, onCancel }: {
   open: boolean;
   title: string;
   description: string;
   confirmLabel?: string;
+  destructive?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -44,7 +45,7 @@ export function ConfirmationDialog({ open, title, description, confirmLabel = "C
       <p>{description}</p>
       <div>
         <Button variant="ghost" onClick={onCancel}>Cancel</Button>
-        <Button variant="destructive" onClick={onConfirm}>{confirmLabel}</Button>
+        <Button variant={destructive ? "destructive" : "default"} onClick={onConfirm}>{confirmLabel}</Button>
       </div>
     </dialog>
   );

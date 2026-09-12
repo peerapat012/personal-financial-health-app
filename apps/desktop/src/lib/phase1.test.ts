@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 
 import { formatDate, formatDuration, formatThb, formatWeight } from "./format.ts";
 import { getRoute } from "../routes/routes.ts";
@@ -21,4 +22,11 @@ test("Phase 5 quick-add routes and theme selection", () => {
   assert.equal(isDark("system", false), false);
   assert.equal(isDark("light", true), false);
   assert.equal(isDark("dark", false), true);
+});
+
+test("Phase 6 mutation failures retain the form and client ID", () => {
+  const source = readFileSync(new URL("../features/finance/components/TransactionForm.tsx", import.meta.url), "utf8");
+  assert.match(source, /mutation\.mutate\(\{ \.\.\.form,/);
+  assert.match(source, /onSuccess:[\s\S]*setForm\(blank\(\)\)/);
+  assert.match(source, /retry with the same ID/);
 });

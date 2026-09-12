@@ -1,11 +1,13 @@
 import unittest
+import os
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from app.core.config import Settings
+from app.core.config import Settings, get_http_settings
 from app.db import get_db
 from app.main import create_app
 from app.models.auth import AuthOwner, AuthSession
@@ -82,6 +84,40 @@ class FoundationTest(unittest.TestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
+
+    def test_request_body_is_limited(self) -> None:
+        response = self.client.post(
+            "/api/v1/auth/sign-in",
+            content=b"x" * 1_048_577,
+            headers={"content-type": "application/json"},
+        )
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.json()["error"]["code"], "REQUEST_TOO_LARGE")
+
+    def test_production_redirects_https_and_rejects_unknown_hosts(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "APP_ENV": "production",
+                "ALLOWED_HOSTS": "api.example.com",
+                "CORS_ORIGINS": "tauri://localhost",
+            },
+        ):
+            get_http_settings.cache_clear()
+            app = create_app()
+        get_http_settings.cache_clear()
+        with TestClient(app, base_url="https://api.example.com") as client:
+            self.assertEqual(client.get("/healthz").status_code, 200)
+            self.assertEqual(
+                client.get(
+                    "https://untrusted.example.com/healthz", follow_redirects=False
+                ).status_code,
+                400,
+            )
+        with TestClient(app, base_url="http://api.example.com") as client:
+            self.assertEqual(
+                client.get("/healthz", follow_redirects=False).status_code, 307
+            )
 
 
 if __name__ == "__main__":

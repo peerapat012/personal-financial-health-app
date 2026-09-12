@@ -105,6 +105,17 @@ class NativeAuthTest(unittest.TestCase):
             ).status_code,
             422,
         )
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/auth/sign-in",
+                json={
+                    "username": "owner",
+                    "password": "long-enough-password",
+                    "admin": True,
+                },
+            ).status_code,
+            422,
+        )
 
 
 if __name__ == "__main__":

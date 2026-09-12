@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pwdlib import PasswordHash
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -71,6 +71,20 @@ def require_session(
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     token = credentials.credentials if credentials else ""
+    _validate_session(db, token)
+
+
+def require_snapshot_session(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
+    if db.get_bind().dialect.name == "postgresql":
+        db.connection(execution_options={"isolation_level": "REPEATABLE READ"})
+        db.execute(text("SET TRANSACTION READ ONLY"))
+    _validate_session(db, credentials.credentials if credentials else "")
+
+
+def _validate_session(db: Session, token: str) -> None:
     if len(token) != 43:
         raise AppError(401, "UNAUTHORIZED", "Invalid credentials")
     try:
