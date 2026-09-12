@@ -2,7 +2,7 @@
 
 ## Conventions
 
-The database is PostgreSQL on Neon in the `public` schema. There is no `users` table in V1 because the single authenticated owner shares one data set. If multi-user access is added, ownership and isolation must be designed before changing this assumption.
+The database is PostgreSQL on Neon in the `public` schema. Business tables belong to one authenticated owner's data set. Phase 5 adds Better Auth tables named `auth_user`, `auth_session`, `auth_account`, and `auth_verification`; they have no foreign keys to business tables. FastAPI accepts only the configured owner ID. Multi-user ownership/isolation remains out of scope.
 
 - Primary keys are UUIDs. Client-created POST resources use a UUID supplied by the desktop so a timed-out request can be checked or retried with the same ID. Server-created IDs, such as a first daily log if needed, use PostgreSQL or Python UUID generation consistently.
 - Every table has `created_at timestamptz NOT NULL` and `updated_at timestamptz NOT NULL`. The backend/database supplies UTC timestamps.
@@ -204,4 +204,4 @@ The backend/database writes `created_at` and `updated_at` in UTC. User-facing fi
 
 ## Migration strategy
 
-Alembic is the authoritative schema history. The initial migration creates all V1 tables, constraints, indexes, and seed categories. Each later schema change updates the SQLAlchemy model and adds a reviewed forward migration. Migrations run explicitly against the direct Neon connection before a release; the API does not call `create_all()` or auto-migrate on startup. Backups are taken before production migrations.
+Alembic is the authoritative business schema history. The initial migration creates all eight business tables, constraints, indexes, and seed categories. Each later business schema change updates the SQLAlchemy model and adds a reviewed forward migration. Phase 5's Better Auth service manages its four prefixed auth tables separately through `npm run migrate` in `apps/auth`, using the installed/pinned library schema and a direct migration connection. Neither service auto-migrates on startup. Backups are taken before production migrations.

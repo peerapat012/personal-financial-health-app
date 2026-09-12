@@ -37,6 +37,22 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.dark {
+  --background: oklch(0.18 0.018 156);
+  --foreground: oklch(0.94 0.012 92);
+  --card: oklch(0.225 0.022 156);
+  --primary: oklch(0.78 0.1 157);
+  --primary-foreground: oklch(0.18 0.03 157);
+  --secondary: oklch(0.29 0.024 156);
+  --muted: oklch(0.27 0.019 156);
+  --muted-foreground: oklch(0.74 0.02 155);
+  --accent: oklch(0.38 0.055 82);
+  --accent-foreground: oklch(0.94 0.03 82);
+  --destructive: oklch(0.74 0.15 28);
+  --border: oklch(0.37 0.024 155);
+  --ring: oklch(0.72 0.09 157);
+}
+
 @theme inline {
   --font-sans: "Geist Variable", sans-serif;
   --color-background: var(--background);

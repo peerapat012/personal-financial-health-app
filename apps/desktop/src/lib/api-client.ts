@@ -30,13 +30,14 @@ export async function apiRequest<T>(
   init: RequestInit = {},
 ): Promise<T> {
   const controller = new AbortController();
+  const requestToken = token;
   const timeout = window.setTimeout(() => controller.abort(), 20_000);
 
   try {
     const headers = new Headers(init.headers);
     headers.set("Accept", "application/json");
     if (init.body) headers.set("Content-Type", "application/json");
-    if (token) headers.set("Authorization", `Bearer ${token}`);
+    if (requestToken) headers.set("Authorization", `Bearer ${requestToken}`);
 
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...init,
@@ -49,6 +50,9 @@ export async function apiRequest<T>(
         : await response.json().catch(() => null);
 
     if (!response.ok) {
+      if (response.status === 401 && requestToken && token === requestToken && !path.startsWith("/auth/")) {
+        window.dispatchEvent(new Event("session-expired"));
+      }
       const error = (body as ErrorEnvelope | null)?.error;
       throw new ApiError(
         error?.message ?? "Request failed",

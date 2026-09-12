@@ -64,7 +64,7 @@ Month = Annotated[
     date,
     BeforeValidator(parse_month),
     AfterValidator(first_day),
-    PlainSerializer(lambda value: value.strftime("%Y-%m"), return_type=str),
+    PlainSerializer(lambda value: value.strftime("%Y-%m"), return_type=str, when_used="json"),
 ]
 
 

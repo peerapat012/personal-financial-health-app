@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
@@ -13,11 +14,15 @@ import {
   WalletCards,
 } from "lucide-react";
 
-import { ConfirmationDialog, EmptyState } from "@/components/Feedback";
+import { ConfirmationDialog, ErrorState, LoadingState } from "@/components/Feedback";
+import { UsernameSignIn } from "@/components/UsernameSignIn";
 import { Button } from "@/components/ui/button";
 import { FinancePage } from "@/features/finance/pages/FinancePage";
 import { HealthPage } from "@/features/health/pages/HealthPage";
 import { GoalsPage } from "@/features/goals/pages/GoalsPage";
+import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
+import { SettingsPage } from "@/features/settings/pages/SettingsPage";
+import { isDark, readTheme } from "@/lib/theme";
 import type { SessionResponse } from "@/lib/api-types";
 import {
   ApiError,
@@ -51,6 +56,30 @@ function App() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmLock, setConfirmLock] = useState(false);
   const [goalsDirty, setGoalsDirty] = useState(false);
+  const [theme, setTheme] = useState(readTheme);
+  const authConfig = useQuery({ queryKey: ["auth-config"], queryFn: () => apiRequest<{ mode: "personal_token" | "better_auth" }>("/auth/config"), enabled: !session, staleTime: Infinity });
+
+  useEffect(() => {
+    const expired = () => {
+      clearApiToken(); queryClient.clear(); setSession(null); setGoalsDirty(false);
+      setError("Your session expired. Sign in again to continue.");
+    };
+    window.addEventListener("session-expired", expired);
+    return () => window.removeEventListener("session-expired", expired);
+  }, []);
+
+  useEffect(() => {
+    const system = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      const dark = isDark(theme, system.matches);
+      document.documentElement.classList.toggle("dark", dark);
+      document.documentElement.style.colorScheme = dark ? "dark" : "light";
+    };
+    apply();
+    try { localStorage.setItem("theme", theme); } catch { /* Appearance still works when storage is unavailable. */ }
+    system.addEventListener("change", apply);
+    return () => system.removeEventListener("change", apply);
+  }, [theme]);
 
   useEffect(() => {
     const syncRoute = () => {
@@ -96,6 +125,12 @@ function App() {
   }
 
   function lock() {
+    if (authConfig.data?.mode === "better_auth") {
+      void apiRequest<void>("/auth/sign-out", { method: "POST", body: "{}" }).catch(() => {
+        setError("Locked on this device. Server sign-out could not be confirmed; the remote session will expire automatically.");
+      });
+    }
+    setError("");
     setGoalsDirty(false);
     clearApiToken();
     queryClient.clear();
@@ -105,6 +140,9 @@ function App() {
   }
 
   if (!session) {
+    if (authConfig.isPending) return <main className="session-page"><LoadingState label="Connecting to your API…" /></main>;
+    if (authConfig.error) return <main className="session-page"><ErrorState message="The API could not be reached." onRetry={() => authConfig.refetch()} /></main>;
+    if (authConfig.data.mode === "better_auth") return <UsernameSignIn notice={error} onConnected={(next) => { setError(""); setSession(next); goTo("/dashboard", true); }} />;
     return (
       <main className="session-page">
         <section className="session-intro" aria-labelledby="welcome-title">
@@ -192,16 +230,10 @@ function App() {
       <main className="route-page">
         <header className="route-header">
           <div><p className="eyebrow">{activeRoute.kicker}</p><h2>{activeRoute.label}</h2></div>
-          <span className="api-pill"><i /> API connected</span>
+          <span className="api-pill"><i /> Session unlocked</span>
         </header>
         <div className="route-body">
-          {activeRoute.id === "finance" ? <FinancePage /> : activeRoute.id === "health" ? <HealthPage /> : activeRoute.id === "goals" ? <GoalsPage onDirtyChange={setGoalsDirty} /> : (
-            <EmptyState
-              icon={routeIcons[activeRoute.id]}
-              title={`${activeRoute.label} is ready for its data`}
-              description={activeRoute.description}
-            />
-          )}
+          {activeRoute.id === "finance" ? <FinancePage /> : activeRoute.id === "health" ? <HealthPage /> : activeRoute.id === "goals" ? <GoalsPage onDirtyChange={setGoalsDirty} /> : activeRoute.id === "settings" ? <SettingsPage session={session} theme={theme} onThemeChange={setTheme} onLock={() => setConfirmLock(true)} /> : <DashboardPage />}
         </div>
       </main>
 

@@ -6,6 +6,8 @@ from app.core.errors import register_error_handlers
 from app.routes.finance import router as finance_router
 from app.routes.health import router as health_router
 from app.routes.goals import router as goals_router
+from app.routes.dashboard import router as dashboard_router
+from app.routes.auth import router as auth_router
 from app.routes.system import router as system_router
 
 
@@ -25,6 +27,8 @@ def create_app() -> FastAPI:
     app.include_router(finance_router)
     app.include_router(health_router)
     app.include_router(goals_router)
+    app.include_router(dashboard_router)
+    app.include_router(auth_router)
     return app
 
 

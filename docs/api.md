@@ -2,7 +2,7 @@
 
 ## Common contract
 
-The API is JSON over HTTPS in production. Business endpoints use `/api/v1` and require `Authorization: Bearer <personal-token>`. `GET /healthz` is unauthenticated liveness only. IDs are UUID strings, dates are `YYYY-MM-DD`, timestamps are ISO 8601 UTC, and money and weight values are decimal strings.
+The API is JSON over HTTPS in production. Business endpoints use `/api/v1` and require `Authorization: Bearer <token>`. In Better Auth mode the token is a verified session belonging to the configured owner; explicit legacy mode accepts the personal token. `GET /healthz` is unauthenticated liveness only. IDs are UUID strings, dates are `YYYY-MM-DD`, timestamps are ISO 8601 UTC, and money and weight values are decimal strings.
 
 List responses use:
 
@@ -28,6 +28,8 @@ Errors use:
 Common errors are 401 authentication failure, 404 missing ID, 409 duplicate/reference/archive conflict, 422 invalid input or business rule, 429 rate limit, 503 database/network unavailable, and 500 unexpected server error.
 
 ## System endpoints
+
+Phase 5 adds `GET /api/v1/auth/config` (public, returns `{"mode":"personal_token"}` or `{"mode":"better_auth"}`), `POST /api/v1/auth/sign-in` (public, accepts `{"username":"owner","password":"..."}`, returns only `{"token":"..."}` with `Cache-Control: no-store`), and `POST /api/v1/auth/sign-out` (uses the bearer session and revokes it, 204). Sign-in is available only in Better Auth mode. Public signup is not exposed. Invalid/non-owner sessions return 401, rate limits return 429, and auth-service failure returns 503. Desktop credentials and tokens are never persisted.
 
 | Method | Path | Purpose | Request/query | Response |
 |---|---|---|---|---|
@@ -143,6 +145,16 @@ Both goal collections support stable pagination and default to excluding archive
 | GET | `/api/v1/dashboard` | Return the Dashboard snapshot for one month. | Required `month=YYYY-MM`. | `{ "month": "2026-09", "account_balances": {...}, "finance": {...}, "budgets": [...], "health": {...}, "goals": [...], "recent_transactions": [...] }` |
 
 The response includes total balance as of today, selected-month income/expense/net cash flow, expense-by-category, budget actuals, latest weight and date, workout minutes, active goals, and five recent transactions. Month boundaries use `Asia/Bangkok`. The service computes these values from one consistent read snapshot. Invalid month format returns 422; database failure returns 503.
+
+Phase 5 concrete response fields:
+
+- `account_balances`: `as_of`, decimal `total`, and all account resources in `items` (including archived accounts).
+- `finance`: `month`, decimal `income`, `expense`, `net_cash_flow`, and `expense_by_category` entries containing `category_id`, `category_name`, and decimal `amount`.
+- `budgets`: `id`, `category_id`, `category_name`, decimal `amount`, `actual`, and `remaining`. Negative remaining means over budget.
+- `health`: latest non-null `latest_weight_kg` and `latest_weight_date` through today, selected-month `workout_minutes`, `recorded_weight_days`, `average_weight_kg`, and `weight_trend` entries (`date`, nullable decimal `weight_kg`). Trend includes every calendar day through today within the selected month, with null gaps. Latest weight is not limited to the reporting month.
+- `goals`: active financial/health goal resources, with current progress; `recent_transactions`: the latest five transaction resources across all months.
+
+Money, weights, ratios, and percentages remain decimal strings. Missing weights remain null. PostgreSQL dashboard reads use REPEATABLE READ set before the first query.
 
 ## Filtering and validation rules
 

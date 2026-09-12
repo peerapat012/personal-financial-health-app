@@ -35,3 +35,11 @@ uv run fastapi dev app/main.py
 ```
 
 Check database connectivity with `uv run python -m app.check_db`. Run migrations with `uv run alembic upgrade head`.
+
+### Username/password sign-in
+
+Phase 5 adds a private Better Auth service in [`apps/auth`](apps/auth/README.md). Follow its setup instructions to migrate auth tables, provision the single owner, and activate `AUTH_MODE=better_auth` in FastAPI. Existing token sign-in remains active until that configuration changes. The desktop discovers the configured sign-in mode automatically.
+
+### Checks
+
+Run `uv run python -m unittest discover -s tests -v` in `apps/api`, `npm test` in `apps/auth`, and `npm test` plus `npm run build` in `apps/desktop`.

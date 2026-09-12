@@ -121,3 +121,13 @@ export type FinancialGoal = FinancialGoalInput & GoalProgress & { account_name: 
 export type HealthGoal = HealthGoalInput & GoalProgress & { current_weight_kg: string | null; current_weight_date: string | null };
 export type Goal = FinancialGoal | HealthGoal;
 export type GoalKind = "financial" | "health";
+
+export type Dashboard = {
+  month: string;
+  account_balances: { as_of: string; total: string; items: Account[] };
+  finance: { month: string; income: string; expense: string; net_cash_flow: string; expense_by_category: { category_id: string; category_name: string; amount: string }[] };
+  budgets: { id: string; category_id: string; category_name: string; amount: string; actual: string; remaining: string }[];
+  health: { latest_weight_kg: string | null; latest_weight_date: string | null; workout_minutes: number; recorded_weight_days: number; average_weight_kg: string | null; weight_trend: { date: string; weight_kg: string | null }[] };
+  goals: Goal[];
+  recent_transactions: Transaction[];
+};

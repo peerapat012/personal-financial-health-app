@@ -1,4 +1,5 @@
 from collections import defaultdict
+from calendar import monthrange
 from collections.abc import Iterable
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -82,7 +83,7 @@ def _account_response(account: Account, balance: Decimal) -> AccountResponse:
     )
 
 
-def list_accounts(db: Session, include_archived: bool, limit: int, offset: int):
+def list_accounts(db: Session, include_archived: bool, limit: int | None, offset: int):
     filters = [] if include_archived else [Account.archived_at.is_(None)]
     total = db.scalar(select(func.count()).select_from(Account).where(*filters)) or 0
     rows = db.execute(
@@ -301,7 +302,7 @@ def _budget_response(row) -> BudgetResponse:
     )
 
 
-def list_budgets(db: Session, filters: list, limit: int, offset: int):
+def list_budgets(db: Session, filters: list, limit: int | None, offset: int):
     total = db.scalar(select(func.count()).select_from(Budget).where(*filters)) or 0
     rows = db.execute(select(Budget, Category.name).join(Category).where(*filters).order_by(Budget.month.desc(), Category.name).limit(limit).offset(offset)).all()
     return [_budget_response(row) for row in rows], total
@@ -369,11 +370,11 @@ def finance_totals(rows: Iterable[tuple[Transaction, str | None]], month: str) -
 
 
 def get_finance_summary(db: Session, month: date) -> FinanceSummaryResponse:
-    next_month = date(month.year + (month.month == 12), month.month % 12 + 1, 1)
+    month_end = date(month.year, month.month, monthrange(month.year, month.month)[1])
     rows = db.execute(
         select(Transaction, Category.name)
         .outerjoin(Category, Transaction.category_id == Category.id)
-        .where(Transaction.occurred_on >= month, Transaction.occurred_on < next_month)
+        .where(Transaction.occurred_on >= month, Transaction.occurred_on <= month_end)
     ).all()
     # ponytail: one personal month is aggregated in memory; move this to SQL if profiling shows a limit.
     return finance_totals(rows, month.strftime("%Y-%m"))

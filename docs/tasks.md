@@ -70,15 +70,17 @@ Phase 4 reuses the goal models/tables from migration `0001`, existing finance/he
 
 ## Phase 5: Dashboard and experience
 
-- [ ] Add Better Auth username/password sign-in, session handling, and FastAPI authorization integration. Dependency: deployed API and database.
-- [ ] Add the dashboard aggregation service and `/api/v1/dashboard?month=YYYY-MM`. Dependency: finance/health/goals services.
-- [ ] Add Dashboard page cards for balances, monthly finance, budgets, health, goals, and recent transactions. Dependency: dashboard API.
-- [ ] Add the month selector and correct Asia/Bangkok month boundaries. Dependency: Dashboard page.
-- [ ] Add simple charts for expense by category, cash flow, and weight trend using one chart dependency only if needed. Dependency: dashboard/summary responses.
-- [ ] Add dashboard loading, empty, error, and no-data states. Dependency: Dashboard page.
-- [ ] Add quick-add actions that open existing finance and health forms. Dependency: feature forms.
-- [ ] Add Settings page for units/timezone display, session lock, app version, and API status. Dependency: session and app shell.
-- [ ] Add a light, dark, and system theme switch with a persisted preference. Dependency: Settings page and app shell.
+- [x] Add Better Auth username/password sign-in, session handling, and FastAPI authorization integration. Dependency: deployed API and database.
+- [x] Add the dashboard aggregation service and `/api/v1/dashboard?month=YYYY-MM`. Dependency: finance/health/goals services.
+- [x] Add Dashboard page cards for balances, monthly finance, budgets, health, goals, and recent transactions. Dependency: dashboard API.
+- [x] Add the month selector and correct Asia/Bangkok month boundaries. Dependency: Dashboard page.
+- [x] Add simple charts for expense by category, cash flow, and weight trend using one chart dependency only if needed. Dependency: dashboard/summary responses.
+- [x] Add dashboard loading, empty, error, and no-data states. Dependency: Dashboard page.
+- [x] Add quick-add actions that open existing finance and health forms. Dependency: feature forms.
+- [x] Add Settings page for units/timezone display, session lock, app version, and API status. Dependency: session and app shell.
+- [x] Add a light, dark, and system theme switch with a persisted preference. Dependency: Settings page and app shell.
+
+Phase 5 implementation is complete locally: 18 API tests, the Better Auth username/bearer integration check, two desktop checks, and the desktop production build pass. Charts use native bars/SVG. Better Auth is not activated on a live database: deploy `apps/auth`, run its explicit auth-table migration, provision the owner, and configure FastAPI as described in `apps/auth/README.md`. Token mode remains active until then. PostgreSQL snapshot concurrency and native UI acceptance remain release checks.
 
 ## Phase 6: data protection and release readiness
 

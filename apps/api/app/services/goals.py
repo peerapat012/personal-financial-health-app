@@ -63,7 +63,7 @@ def get_goal(db: Session, model: GoalModel, goal_id: UUID):
     return _response(db, _get(db, model, goal_id))
 
 
-def list_goals(db: Session, model: GoalModel, include_archived: bool, limit: int, offset: int):
+def list_goals(db: Session, model: GoalModel, include_archived: bool, limit: int | None, offset: int):
     filters = [] if include_archived else [model.archived_at.is_(None)]
     total = db.scalar(select(func.count()).select_from(model).where(*filters)) or 0
     items = db.scalars(select(model).where(*filters).order_by(model.created_at.desc(), model.id.desc()).limit(limit).offset(offset))

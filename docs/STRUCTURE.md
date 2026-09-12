@@ -36,6 +36,8 @@ project-root/
 
 Create directories and files only when a feature needs them. This tree describes ownership, not a demand to scaffold empty folders now.
 
+Phase 5 additionally owns `apps/auth/`: the Node Better Auth service, explicit auth-table migration and owner provisioning commands, and their focused integration check. Desktop requests still go through FastAPI. Auth tables are prefixed `auth_*` and kept separate from the business models.
+
 ## Desktop directories
 
 - `apps/desktop/src/components/`: shared UI primitives and shared feedback components used by at least two features.

@@ -17,7 +17,7 @@ export const appRoutes: AppRoute[] = [
 ];
 
 export function getRoute(path: string): AppRoute {
-  return appRoutes.find((route) => route.path === path) ?? appRoutes[0];
+  return appRoutes.find((route) => route.path === path.split("?")[0]) ?? appRoutes[0];
 }
 
 export function getRouteFromHash(): AppRoute {

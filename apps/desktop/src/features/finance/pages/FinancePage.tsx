@@ -74,7 +74,10 @@ function BudgetsPanel({ categories }: { categories: Category[] }) {
 }
 
 export function FinancePage() {
-  const [view, setView] = useState<View>("transactions");
+  const [view, setView] = useState<View>(() => {
+    const requested = new URLSearchParams(window.location.hash.split("?")[1]).get("view");
+    return requested === "accounts" || requested === "categories" || requested === "budgets" ? requested : "transactions";
+  });
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const accounts = useAccounts(true);
   const categories = useCategories(true);
